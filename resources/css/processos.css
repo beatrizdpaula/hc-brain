@@ -1,0 +1,183 @@
+/* ==========================================================================
+   TELA PROCESSOS
+   Lista em acordeão: o resumo de cada processo fica visível e as etapas
+   aparecem ao abrir. O elemento é <details>, então o estado aberto/fechado
+   é do próprio navegador.
+   ========================================================================== */
+
+.processos-lista {
+    padding: var(--esp-2) var(--esp-3) var(--esp-3);
+}
+
+.processo {
+    border: 1px solid transparent;
+    border-radius: var(--raio-md);
+    transition: var(--transicao);
+}
+
+.processo + .processo {
+    margin-top: var(--esp-1);
+}
+
+.processo[open] {
+    border-color: var(--border);
+    background: var(--surface-alto);
+}
+
+.processo-resumo {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-4);
+    padding: var(--esp-4);
+    border-radius: var(--raio-md);
+    cursor: pointer;
+    list-style: none;
+    transition: var(--transicao);
+}
+
+.processo-resumo::-webkit-details-marker {
+    display: none;
+}
+
+.processo-resumo:hover {
+    background: var(--surface-hover);
+}
+
+.processo-texto {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.processo-texto strong {
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+}
+
+.processo-texto > span {
+    overflow: hidden;
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.processo-tags {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--esp-2);
+}
+
+.processo-seta {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    color: var(--texto-fraco);
+    transition: transform var(--transicao);
+}
+
+.processo-seta svg {
+    width: 18px;
+    height: 18px;
+}
+
+.processo[open] .processo-seta {
+    transform: rotate(180deg);
+}
+
+/* --------------------------------------------------------------------------
+   CORPO ABERTO: ETAPAS NUMERADAS E FICHA DO PROCESSO
+   -------------------------------------------------------------------------- */
+.processo-corpo {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: var(--esp-6);
+    padding: 0 var(--esp-4) var(--esp-5) calc(var(--esp-4) + 38px + var(--esp-4));
+}
+
+.processo-etapas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-3);
+    padding: 0;
+    margin: 0;
+    counter-reset: etapa;
+    list-style: none;
+}
+
+.processo-etapas li {
+    position: relative;
+    padding-left: var(--esp-8);
+    color: var(--texto);
+    font-size: var(--texto-base);
+    line-height: var(--altura-normal);
+    counter-increment: etapa;
+}
+
+/* O número da etapa e a linha que liga uma à outra desenham o fluxo. */
+.processo-etapas li::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--border-forte);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--roxo-claro);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    content: counter(etapa);
+    place-items: center;
+}
+
+.processo-etapas li:not(:last-child)::after {
+    position: absolute;
+    top: 26px;
+    bottom: calc(-1 * var(--esp-3));
+    left: 11px;
+    width: 1px;
+    background: var(--border);
+    content: "";
+}
+
+.processo-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-3);
+    height: max-content;
+    padding: var(--esp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.processo-meta dt {
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.processo-meta dd {
+    margin-top: 2px;
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+}
+
+@media (max-width: 850px) {
+    .processo-corpo {
+        grid-template-columns: 1fr;
+        gap: var(--esp-4);
+        padding-left: var(--esp-4);
+    }
+
+    .processo-texto > span,
+    .processo-tags {
+        display: none;
+    }
+}

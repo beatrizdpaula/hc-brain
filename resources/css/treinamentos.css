@@ -1,0 +1,122 @@
+/* ==========================================================================
+   TELA TREINAMENTOS
+   Aviso de integração, grade de conteúdos e a tabela do histórico. Painéis,
+   filtros, etiquetas e a barra de progresso vêm de componentes.css.
+   ========================================================================== */
+
+.training-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-4);
+    padding: var(--esp-4);
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.training-banner strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+}
+
+/* O texto de apoio é um parágrafo próprio: antes era um <span> logo depois
+   do <strong>, e as duas frases apareciam grudadas na mesma linha. */
+.training-banner p {
+    margin-top: 2px;
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+}
+
+/* --------------------------------------------------------------------------
+   CARTÕES DE CONTEÚDO
+   -------------------------------------------------------------------------- */
+.training-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--esp-4);
+    padding: var(--esp-4) var(--esp-5) var(--esp-5);
+}
+
+.training-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-3);
+    padding: var(--esp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface-alto);
+    cursor: pointer;
+    transition: var(--transicao);
+}
+
+.training-card:hover {
+    border-color: var(--border-forte);
+    background: var(--surface-hover);
+}
+
+.training-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--esp-3);
+}
+
+.training-card h3 {
+    margin: 0;
+    font-size: var(--texto-md);
+    line-height: var(--altura-apertada);
+}
+
+.training-card p {
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    line-height: var(--altura-normal);
+}
+
+.training-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-1);
+    margin-top: auto;
+    padding-top: var(--esp-2);
+}
+
+/* --------------------------------------------------------------------------
+   HISTÓRICO
+   -------------------------------------------------------------------------- */
+.training-history td strong {
+    display: block;
+    color: var(--texto-forte);
+    font-weight: var(--peso-medio);
+}
+
+.training-history td small {
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+}
+
+.training-progresso {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    min-width: 140px;
+}
+
+.training-progresso .barra {
+    flex: 1;
+}
+
+.training-progresso > span {
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+@media (max-width: 550px) {
+    .training-cards {
+        grid-template-columns: 1fr;
+        padding: var(--esp-3);
+    }
+}

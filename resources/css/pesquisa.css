@@ -1,0 +1,178 @@
+/* ==========================================================================
+   TELA PESQUISA
+   Campo de busca, filtros na coluna da esquerda, pesquisas recentes e
+   resultados. O campo e as pílulas vêm de comum/componentes.css.
+   ========================================================================== */
+
+.research-box {
+    padding: var(--esp-4);
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.advanced-search .search-submit {
+    flex: 0 0 auto;
+    height: 38px;
+}
+
+/* --------------------------------------------------------------------------
+   FILTROS E RESULTADOS
+   -------------------------------------------------------------------------- */
+.research-layout {
+    display: grid;
+    grid-template-columns: 232px 1fr;
+    gap: var(--esp-4);
+    align-items: start;
+}
+
+.research-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-4);
+    padding: var(--esp-5);
+}
+
+.research-sidebar h2 {
+    margin: 0;
+}
+
+.results-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-4);
+    margin-bottom: var(--esp-3);
+}
+
+.results-top h2 {
+    margin: 0;
+}
+
+.results-top span {
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+}
+
+/* --------------------------------------------------------------------------
+   PESQUISAS RECENTES
+   -------------------------------------------------------------------------- */
+.recent-searches {
+    overflow: hidden;
+    padding: 0;
+}
+
+.recent-card {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-4);
+    width: 100%;
+    padding: var(--esp-4) var(--esp-5);
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    text-align: left;
+    transition: var(--transicao);
+}
+
+.recent-card:last-child {
+    border-bottom: none;
+}
+
+.recent-card:hover {
+    background: var(--surface-hover);
+}
+
+.recent-card-icon,
+.recent-card-seta {
+    display: grid;
+    color: var(--texto-fraco);
+    place-items: center;
+}
+
+.recent-card-icon svg,
+.recent-card-seta svg {
+    width: 16px;
+    height: 16px;
+}
+
+.recent-card:hover .recent-card-seta {
+    color: var(--roxo-claro);
+}
+
+.recent-card-texto {
+    flex: 1;
+    min-width: 0;
+}
+
+.recent-card-texto strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-medio);
+}
+
+.recent-card-texto small {
+    display: block;
+    margin-top: 2px;
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+}
+
+/* --------------------------------------------------------------------------
+   CARTÕES DE RESULTADO
+   -------------------------------------------------------------------------- */
+.result-card {
+    display: block;
+    width: 100%;
+    padding: var(--esp-5);
+    margin-bottom: var(--esp-3);
+    text-align: left;
+    cursor: pointer;
+}
+
+.result-type {
+    color: var(--roxo-claro);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.result-card h3 {
+    margin: var(--esp-2) 0;
+}
+
+.result-card p {
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    line-height: var(--altura-normal);
+}
+
+.result-meta {
+    display: block;
+    margin-top: var(--esp-3);
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVO
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .research-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 550px) {
+    .advanced-search {
+        flex-wrap: wrap;
+        padding: var(--esp-3);
+    }
+
+    .advanced-search .search-submit {
+        width: 100%;
+    }
+}

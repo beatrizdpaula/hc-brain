@@ -1,0 +1,619 @@
+/* ==========================================================================
+   TELA DETALHE DO CLIENTE
+   Aberta por /clientes/{id}: cabeçalho da empresa, relacionamento financeiro,
+   sócio, fontes, reuniões, treinamentos e o extrato daquele cliente.
+   ========================================================================== */
+
+.empresa-detail {
+    display: none;
+}
+
+.empresa-detail.active {
+    display: block;
+}
+
+.back-button {
+    margin-bottom: var(--esp-4);
+}
+
+/* --------------------------------------------------------------------------
+   CABEÇALHO DA EMPRESA
+   -------------------------------------------------------------------------- */
+.empresa-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-5);
+    padding: var(--esp-5);
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.empresa-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-4);
+}
+
+.empresa-avatar.large {
+    width: 56px;
+    height: 56px;
+    font-size: var(--texto-xl);
+}
+
+.empresa-header h1 {
+    margin-bottom: var(--esp-2);
+    font-size: var(--texto-xl);
+}
+
+.empresa-header-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-2);
+}
+
+/* Cada estatística é um par rótulo/valor empilhado: com rótulo e número lado
+   a lado, a linha virava uma sopa de texto sem relação visível. */
+.empresa-quick-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-8);
+}
+
+.empresa-quick-stats dt {
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.empresa-quick-stats dd {
+    margin-top: var(--esp-1);
+    color: var(--texto-forte);
+    font-size: var(--texto-xl);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.02em;
+}
+
+/* --------------------------------------------------------------------------
+   RELACIONAMENTO FINANCEIRO
+   -------------------------------------------------------------------------- */
+.empresa-relacionamento-financeiro {
+    overflow: hidden;
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.empresa-relacionamento-head {
+    padding: var(--esp-4) var(--esp-5);
+    border-bottom: 1px solid var(--border);
+}
+
+.empresa-relacionamento-head h2 {
+    margin: 0;
+    font-size: var(--texto-md);
+}
+
+.empresa-relacionamento-head p {
+    margin-top: 2px;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.empresa-relacionamento-body {
+    padding: var(--esp-4) var(--esp-5) var(--esp-5);
+}
+
+.empresa-ltv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--esp-3);
+}
+
+.empresa-ltv-card {
+    padding: var(--esp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface-alto);
+}
+
+.empresa-ltv-card span {
+    display: block;
+    margin-bottom: var(--esp-2);
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.empresa-ltv-card strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-lg);
+    font-weight: var(--peso-forte);
+    line-height: var(--altura-apertada);
+}
+
+.empresa-ltv-card small {
+    display: block;
+    margin-top: var(--esp-1);
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+}
+
+.empresa-ltv-card.highlight {
+    border-color: var(--roxo);
+    background: var(--roxo-fundo);
+}
+
+.empresa-ltv-card.highlight strong {
+    color: var(--roxo-claro);
+}
+
+.empresa-relacionamento-base {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--esp-3);
+    padding-top: var(--esp-4);
+    margin-top: var(--esp-4);
+    border-top: 1px solid var(--border);
+}
+
+.empresa-base-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    padding: var(--esp-3) var(--esp-4);
+    border-radius: var(--raio-sm);
+    background: var(--surface-alto);
+}
+
+.empresa-base-item span {
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.empresa-base-item strong {
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-forte);
+}
+
+.empresa-base-item.saldo strong {
+    color: var(--verde);
+}
+
+/* --------------------------------------------------------------------------
+   SÓCIO, FONTES E REUNIÕES
+   -------------------------------------------------------------------------- */
+.empresa-body {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--esp-5);
+    align-items: start;
+}
+
+.socio-card {
+    padding: var(--esp-5);
+}
+
+.socio-header {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    padding-bottom: var(--esp-4);
+    margin-bottom: var(--esp-3);
+    border-bottom: 1px solid var(--border);
+}
+
+.socio-avatar {
+    display: grid;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--roxo);
+    color: #fff;
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+    place-items: center;
+}
+
+.socio-header strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+}
+
+.socio-header span {
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+}
+
+.socio-field {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    padding: var(--esp-2) 0;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--texto-base);
+}
+
+.socio-field:last-child {
+    border-bottom: none;
+}
+
+.socio-field span:first-child {
+    color: var(--texto-suave);
+}
+
+.socio-field span:last-child {
+    color: var(--texto-forte);
+    text-align: right;
+}
+
+.empresa-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    margin: var(--esp-6) 0 var(--esp-3);
+}
+
+.empresa-section-title:first-child {
+    margin-top: 0;
+}
+
+.empresa-section-title h2 {
+    margin: 0;
+}
+
+.fontes-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--esp-3);
+}
+
+.fonte-item {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    width: 100%;
+    padding: var(--esp-3) var(--esp-4);
+    text-align: left;
+    cursor: pointer;
+}
+
+.fonte-icon {
+    display: grid;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--raio-sm);
+    background: var(--azul-fundo);
+    color: var(--azul);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    place-items: center;
+}
+
+.fonte-texto {
+    min-width: 0;
+}
+
+.fonte-texto strong {
+    display: block;
+    overflow: hidden;
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-medio);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fonte-texto small {
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.mini-meeting {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-4);
+    width: 100%;
+    padding: var(--esp-3) var(--esp-4);
+    margin-bottom: var(--esp-2);
+    text-align: left;
+    cursor: pointer;
+}
+
+.mini-meeting-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.mini-meeting-body strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-medio);
+}
+
+.mini-meeting-body small {
+    display: block;
+    overflow: hidden;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   TREINAMENTOS RELACIONADOS
+   -------------------------------------------------------------------------- */
+.empresa-treinamentos {
+    overflow: hidden;
+    margin-top: var(--esp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.empresa-treinamentos-head {
+    padding: var(--esp-4) var(--esp-5);
+    border-bottom: 1px solid var(--border);
+}
+
+.empresa-treinamentos-head h2 {
+    margin: 0;
+    font-size: var(--texto-md);
+}
+
+.empresa-treinamentos-head p {
+    margin-top: 2px;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.empresa-treinamentos-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--esp-3);
+    padding: var(--esp-4) var(--esp-5) var(--esp-5);
+}
+
+.empresa-treinamento-item {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    padding: var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-sm);
+    background: var(--surface-alto);
+    text-align: left;
+    cursor: pointer;
+    transition: var(--transicao);
+}
+
+.empresa-treinamento-item:hover {
+    border-color: var(--border-forte);
+    background: var(--surface-hover);
+}
+
+.empresa-treinamento-item .icone-quadro {
+    width: 32px;
+    height: 32px;
+}
+
+.empresa-treinamento-texto {
+    min-width: 0;
+}
+
+.empresa-treinamento-texto strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-medio);
+}
+
+.empresa-treinamento-texto small {
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+/* --------------------------------------------------------------------------
+   FINANCEIRO DETALHADO
+   -------------------------------------------------------------------------- */
+.empresa-financeiro {
+    padding-top: var(--esp-6);
+    margin-top: var(--esp-6);
+    border-top: 1px solid var(--border);
+}
+
+.empresa-financeiro-head {
+    margin-bottom: var(--esp-4);
+}
+
+.empresa-financeiro-head h2 {
+    margin-bottom: var(--esp-1);
+}
+
+.empresa-financeiro-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--esp-3);
+    margin-bottom: var(--esp-4);
+}
+
+.empresa-financeiro-kpi {
+    padding: var(--esp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.empresa-financeiro-kpi span {
+    display: block;
+    margin-bottom: var(--esp-2);
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.empresa-financeiro-kpi strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-xl);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.02em;
+}
+
+.empresa-financeiro-kpi small {
+    display: block;
+    margin-top: var(--esp-1);
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+}
+
+.empresa-financeiro-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: var(--esp-4);
+    margin-bottom: var(--esp-4);
+}
+
+.empresa-financeiro-panel {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.empresa-financeiro-panel-head {
+    padding: var(--esp-4) var(--esp-5);
+    border-bottom: 1px solid var(--border);
+}
+
+.empresa-financeiro-panel-head h3 {
+    margin: 0;
+    font-size: var(--texto-md);
+}
+
+.empresa-financeiro-panel-head p {
+    margin-top: 2px;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.empresa-financeiro-panel-body {
+    padding: var(--esp-4) var(--esp-5);
+}
+
+.empresa-financeiro-months {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-3);
+}
+
+.empresa-financeiro-month {
+    display: grid;
+    grid-template-columns: 80px 1fr 96px;
+    align-items: center;
+    gap: var(--esp-3);
+}
+
+.empresa-financeiro-month-label {
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.empresa-financeiro-month-value {
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-medio);
+    text-align: right;
+}
+
+.empresa-financeiro-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--esp-3);
+}
+
+.empresa-financeiro-summary-item {
+    padding: var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-sm);
+    background: var(--surface-alto);
+}
+
+.empresa-financeiro-summary-item span {
+    display: block;
+    margin-bottom: var(--esp-1);
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+}
+
+.empresa-financeiro-summary-item strong {
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+}
+
+.finance-status {
+    display: inline-block;
+    padding: 3px var(--esp-2);
+    border-radius: var(--raio-pill);
+    background: var(--azul-fundo);
+    color: var(--azul);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-medio);
+}
+
+.finance-status.recebido {
+    background: var(--verde-fundo);
+    color: var(--verde);
+}
+
+.finance-status.pendente {
+    background: var(--amarelo-fundo);
+    color: var(--amarelo);
+}
+
+.finance-status.atrasado {
+    background: var(--vermelho-fundo);
+    color: var(--vermelho);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVO
+   -------------------------------------------------------------------------- */
+@media (max-width: 1100px) {
+    .empresa-body {
+        grid-template-columns: 1fr;
+    }
+
+    .empresa-financeiro-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 550px) {
+    .empresa-header,
+    .empresa-quick-stats {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--esp-4);
+    }
+
+    .empresa-financeiro-summary {
+        grid-template-columns: 1fr;
+    }
+}

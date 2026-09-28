@@ -1,0 +1,251 @@
+/* ==========================================================================
+   TELA DOCUMENTOS
+   Abas, árvore de pastas à esquerda e a grade de arquivos. O cartão, o campo
+   de busca e o alternador de visão vêm de comum/componentes.css.
+   ========================================================================== */
+
+.documents-tabs {
+    display: flex;
+    gap: var(--esp-6);
+    margin-bottom: var(--esp-5);
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-bottom: 1px solid var(--border);
+}
+
+.document-tab {
+    position: relative;
+    padding: var(--esp-3) 2px;
+    border: none;
+    background: transparent;
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-medio);
+    white-space: nowrap;
+    transition: var(--transicao);
+}
+
+.document-tab:hover {
+    color: var(--texto);
+}
+
+.document-tab.active {
+    color: var(--roxo-claro);
+}
+
+.document-tab.active::after {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: var(--roxo);
+    content: "";
+}
+
+/* --------------------------------------------------------------------------
+   LAYOUT: PASTAS + CONTEÚDO
+   -------------------------------------------------------------------------- */
+.documents-layout {
+    display: grid;
+    grid-template-columns: 232px 1fr;
+    gap: var(--esp-4);
+    align-items: start;
+}
+
+.folder-menu {
+    padding: var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.folder-menu-title {
+    margin: var(--esp-2) var(--esp-2) var(--esp-3);
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.folder-menu button {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    width: 100%;
+    padding: var(--esp-2) var(--esp-3);
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    border-radius: var(--raio-sm);
+    background: transparent;
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    text-align: left;
+    transition: var(--transicao);
+}
+
+.folder-menu button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.folder-menu button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.folder-menu button small {
+    margin-left: auto;
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+}
+
+.folder-menu button:hover {
+    background: var(--surface-hover);
+    color: var(--texto-forte);
+}
+
+.folder-menu button.active {
+    border-color: var(--roxo);
+    background: var(--roxo-fundo);
+    color: var(--texto-forte);
+}
+
+/* --------------------------------------------------------------------------
+   BARRA DE FERRAMENTAS E FILTROS
+   -------------------------------------------------------------------------- */
+.documents-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    margin-bottom: var(--esp-3);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+}
+
+.breadcrumb strong {
+    color: var(--texto-forte);
+}
+
+.documents-filtros {
+    display: grid;
+    grid-template-columns: 1fr 190px;
+    gap: var(--esp-3);
+    margin-bottom: var(--esp-3);
+}
+
+.documents-tipo {
+    height: 44px;
+}
+
+/* A contagem e o "selecionar todos" ficam nas pontas da mesma linha: sem
+   largura fixa, o botão empurrava a contagem para uma segunda linha. */
+.documents-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    margin-bottom: var(--esp-3);
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+}
+
+.documents-summary .clear-filters {
+    width: auto;
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   CARTÃO DE DOCUMENTO
+   -------------------------------------------------------------------------- */
+.document-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-4);
+    min-height: 140px;
+    padding: var(--esp-4);
+    cursor: pointer;
+}
+
+.document-card.selecionado {
+    border-color: var(--roxo);
+    box-shadow: 0 0 0 1px var(--roxo);
+}
+
+.document-info h3 {
+    margin: 0 0 2px;
+    overflow: hidden;
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.document-info p {
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.document-more {
+    position: absolute;
+    top: var(--esp-2);
+    right: var(--esp-2);
+    width: 28px;
+    height: 28px;
+}
+
+.document-more svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Modo lista: o mesmo cartão em linha. */
+.documents-grid.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-2);
+}
+
+.documents-grid.list-view .document-card {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--esp-4);
+    min-height: 0;
+    padding: var(--esp-3) var(--esp-4);
+}
+
+.documents-grid.list-view .document-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.documents-grid.list-view .document-more {
+    position: static;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVO
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .documents-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 550px) {
+    .documents-filtros {
+        grid-template-columns: 1fr;
+    }
+}

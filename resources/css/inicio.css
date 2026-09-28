@@ -1,0 +1,233 @@
+/* ==========================================================================
+   TELA INÍCIO
+   Hero de pesquisa, números da base, atalhos e os dois painéis do painel
+   inicial. Cartões, botões e etiquetas vêm de comum/componentes.css.
+   ========================================================================== */
+
+.hero {
+    padding: var(--esp-10);
+    margin-bottom: var(--esp-6);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-lg);
+    background:
+        radial-gradient(circle at 88% 0%, rgb(124 108 245 / 22%), transparent 55%),
+        radial-gradient(circle at 0% 100%, rgb(91 140 255 / 12%), transparent 50%),
+        var(--surface);
+}
+
+.hero-label {
+    display: inline-block;
+    padding: var(--esp-1) var(--esp-3);
+    margin-bottom: var(--esp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-pill);
+    background: var(--surface-alto);
+    color: var(--roxo-claro);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hero h1 {
+    max-width: 20ch;
+    font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+}
+
+.hero p {
+    max-width: 68ch;
+    color: var(--texto-suave);
+    font-size: var(--texto-md);
+    line-height: var(--altura-solta);
+}
+
+/* --------------------------------------------------------------------------
+   BUSCA DO HERO
+   -------------------------------------------------------------------------- */
+.hero-search {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    max-width: 720px;
+    padding: var(--esp-2);
+    margin-top: var(--esp-6);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-lg);
+    background: var(--surface-alto);
+    transition: var(--transicao);
+}
+
+.hero-search:focus-within {
+    border-color: var(--roxo);
+    box-shadow: 0 0 0 3px var(--roxo-fundo);
+}
+
+.hero-search-icon {
+    display: grid;
+    place-items: center;
+    padding-left: var(--esp-2);
+    color: var(--texto-suave);
+}
+
+.hero-search-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.hero-search input {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    outline: none;
+}
+
+.hero-search .primary {
+    height: 40px;
+}
+
+.quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-2);
+    margin-top: var(--esp-4);
+}
+
+/* --------------------------------------------------------------------------
+   NÚMEROS DA BASE
+   -------------------------------------------------------------------------- */
+/* Oito números em quatro colunas: em uma linha só eles ficariam espremidos,
+   e com `auto-fit` a última coluna sobrava sozinha numa segunda linha. */
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--esp-3);
+    margin-bottom: var(--esp-8);
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-3);
+}
+
+.metric-number {
+    color: var(--texto-forte);
+    font-size: var(--texto-2xl);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.metric-label {
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    line-height: var(--altura-normal);
+}
+
+/* --------------------------------------------------------------------------
+   ATALHOS
+   -------------------------------------------------------------------------- */
+.shortcut {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-3);
+    height: 100%;
+    padding: var(--esp-5);
+}
+
+.shortcut h3 {
+    margin: 0;
+}
+
+.shortcut p {
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   PAINÉIS DO RODAPÉ
+   -------------------------------------------------------------------------- */
+.dashboard {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: var(--esp-4);
+    margin-top: var(--esp-8);
+    align-items: start;
+}
+
+.dashboard .panel-body {
+    padding: var(--esp-2) var(--esp-3) var(--esp-3);
+}
+
+.atividade {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-1);
+    padding: var(--esp-3);
+}
+
+.atividade-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+}
+
+.atividade-topo strong {
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-forte);
+}
+
+.atividade-detalhe {
+    overflow: hidden;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.atividade-quando {
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+}
+
+.area-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    padding: var(--esp-3);
+    color: var(--texto);
+}
+
+@media (max-width: 900px) {
+    .metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 550px) {
+    .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        padding: var(--esp-6);
+    }
+
+    .hero-search {
+        flex-wrap: wrap;
+    }
+
+    .hero-search .primary {
+        width: 100%;
+    }
+}

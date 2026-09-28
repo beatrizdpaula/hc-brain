@@ -1,0 +1,233 @@
+/* ==========================================================================
+   ÁREA PRINCIPAL, BARRA SUPERIOR E CABEÇALHO DE TELA
+   Com a sidebar em modo gaveta, a página nunca é empurrada: ela ocupa a
+   largura toda e a barra lateral passa por cima quando é aberta pelo botão
+   de menu.
+   ========================================================================== */
+
+.main {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+/* --------------------------------------------------------------------------
+   BARRA SUPERIOR
+   -------------------------------------------------------------------------- */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-4);
+    height: 52px;
+    padding: 0 var(--esp-5);
+    border-bottom: 1px solid var(--border);
+    background: rgb(10 15 22 / 85%);
+    backdrop-filter: blur(12px);
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    min-width: 0;
+}
+
+.menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--raio-sm);
+    background: var(--surface);
+    color: var(--texto-suave);
+    transition: var(--transicao);
+}
+
+.menu-toggle:hover {
+    border-color: var(--roxo);
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+}
+
+.menu-toggle svg {
+    width: 17px;
+    height: 17px;
+}
+
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.01em;
+}
+
+.topbar-brand .topbar-mark {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--raio-sm);
+    background: linear-gradient(135deg, var(--roxo), var(--azul));
+    color: #fff;
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    min-width: 0;
+}
+
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    padding: var(--esp-1) var(--esp-3) var(--esp-1) var(--esp-1);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-pill);
+    background: var(--surface);
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    white-space: nowrap;
+}
+
+.topbar-user .avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   CORPO DA TELA
+   A largura máxima existe para o conteúdo não esticar sem fim em monitor
+   largo — uma tabela de dois metros não se lê.
+   -------------------------------------------------------------------------- */
+.page {
+    display: none;
+    width: 100%;
+    max-width: var(--largura-conteudo);
+    margin: 0 auto;
+    padding: var(--esp-8) var(--esp-6) var(--esp-12);
+}
+
+.page.active {
+    display: block;
+}
+
+/* Telas que precisam da largura inteira (a conversa da Sofia) removem o
+   respiro do container e cuidam do próprio alinhamento. */
+.page.page-cheia {
+    max-width: none;
+    padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   CABEÇALHO PADRÃO DE TELA
+   Sobrelinha, título, descrição e, à direita, as ações da tela. Toda tela
+   usa esta mesma estrutura, então nenhuma inventa o próprio cabeçalho.
+   -------------------------------------------------------------------------- */
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--esp-4);
+    margin-bottom: var(--esp-6);
+}
+
+.page-header-copy {
+    max-width: 76ch;
+}
+
+.page-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-2);
+}
+
+.page-overline {
+    display: block;
+    margin-bottom: var(--esp-2);
+    color: var(--roxo-claro);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+h1 {
+    margin-bottom: var(--esp-2);
+    color: var(--texto-forte);
+    font-size: var(--texto-2xl);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.02em;
+    line-height: var(--altura-apertada);
+}
+
+h2 {
+    margin-bottom: var(--esp-4);
+    color: var(--texto-forte);
+    font-size: var(--texto-lg);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.01em;
+}
+
+h3 {
+    margin-bottom: var(--esp-2);
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+}
+
+h4 {
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-forte);
+}
+
+.muted {
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    line-height: var(--altura-solta);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVO
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .page {
+        padding: var(--esp-6) var(--esp-4) var(--esp-10);
+    }
+}
+
+@media (max-width: 550px) {
+    .topbar {
+        padding: 0 var(--esp-3);
+    }
+
+    .topbar-user span {
+        display: none;
+    }
+
+    .page {
+        padding: var(--esp-5) var(--esp-3) var(--esp-8);
+    }
+
+    .page-header-actions {
+        width: 100%;
+    }
+}

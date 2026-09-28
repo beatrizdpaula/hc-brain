@@ -1,0 +1,197 @@
+/* ==========================================================================
+   TELA EMPRESAS & CLIENTES
+   Grade de cartões e lista em linhas. A moldura, o alternador de visão e o
+   avatar da empresa vêm de comum/componentes.css; o detalhe de um cliente
+   está em css/cliente.css.
+   ========================================================================== */
+
+.empresas-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    margin-bottom: var(--esp-4);
+}
+
+.empresas-toolbar .document-search {
+    flex: 1 1 320px;
+    max-width: 440px;
+}
+
+/* --------------------------------------------------------------------------
+   CARTÃO DE EMPRESA
+   -------------------------------------------------------------------------- */
+.empresas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--esp-4);
+}
+
+.empresa-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-2);
+    padding: var(--esp-5);
+}
+
+.empresa-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-2);
+    margin-bottom: var(--esp-2);
+}
+
+.empresa-card h3 {
+    margin: 0;
+    font-size: var(--texto-lg);
+}
+
+.empresa-setor {
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+}
+
+.empresa-socio-line {
+    padding-top: var(--esp-3);
+    margin-top: var(--esp-2);
+    border-top: 1px solid var(--border);
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.empresa-socio-line strong {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+}
+
+.empresa-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--esp-3);
+    margin-top: auto;
+    padding-top: var(--esp-3);
+}
+
+.empresa-stats-row dt {
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.empresa-stats-row dd {
+    margin-top: 2px;
+    overflow: hidden;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   LISTA EM LINHAS
+   -------------------------------------------------------------------------- */
+.empresa-list-item {
+    display: grid;
+    grid-template-columns:
+        36px minmax(220px, 1.5fr) minmax(110px, 0.7fr) minmax(140px, 0.8fr)
+        auto;
+    align-items: center;
+    gap: var(--esp-4);
+    min-height: 72px;
+    padding: var(--esp-3) var(--esp-5);
+    border-bottom: 1px solid var(--border);
+    transition: var(--transicao);
+}
+
+.empresa-list-item:last-child {
+    border-bottom: none;
+}
+
+.empresa-list-item:hover {
+    background: var(--surface-hover);
+}
+
+.empresa-list-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--raio-sm);
+}
+
+.empresa-list-main {
+    min-width: 0;
+}
+
+.empresa-list-name {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    min-width: 0;
+}
+
+.empresa-list-name strong {
+    overflow: hidden;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.empresa-list-sub {
+    display: block;
+    margin-top: 2px;
+    overflow: hidden;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.empresa-list-info {
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+}
+
+.empresa-list-info strong {
+    display: block;
+    margin-bottom: 1px;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+}
+
+.empresa-list-action {
+    display: grid;
+    color: var(--texto-fraco);
+    place-items: center;
+}
+
+.empresa-list-action svg {
+    width: 18px;
+    height: 18px;
+}
+
+.empresa-list-item:hover .empresa-list-action {
+    color: var(--roxo-claro);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVO
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .empresa-list-item {
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        gap: var(--esp-3);
+        padding: var(--esp-3);
+    }
+
+    .empresa-list-info {
+        display: none;
+    }
+}

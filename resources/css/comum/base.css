@@ -1,0 +1,241 @@
+/* ==========================================================================
+   BASE — FUNDAÇÃO VISUAL
+   Os tokens daqui valem para o app inteiro: cor, tipografia, espaçamento,
+   raio e sombra. Nenhuma tela deve inventar um valor novo; se um número não
+   existe aqui, ou ele entra nesta lista ou o caso não é de fato diferente.
+   ========================================================================== */
+
+/* A fonte entra no bundle junto com os ícones: nada é buscado em CDN, então
+   a tela não depende de rede de terceiros para renderizar certo. */
+@import "@fontsource-variable/inter";
+
+:root {
+    /* ----------------------------------------------------------------------
+     SUPERFÍCIES
+     Do fundo da página até o elemento mais elevado, em ordem de altura.
+     ---------------------------------------------------------------------- */
+    --bg: #070b11;
+    --surface: #0c131c;
+    --surface-alto: #101925;
+    --surface-hover: #14202e;
+    --sidebar: #131c29;
+
+    --border: #1e2c3d;
+    --border-forte: #2b3d54;
+
+    /* ----------------------------------------------------------------------
+     TEXTO
+     Quatro níveis bastam: título, corpo, apoio e desabilitado.
+     ---------------------------------------------------------------------- */
+    --texto-forte: #eef2f8;
+    --texto: #c6d0dd;
+    --texto-suave: #8b99ac;
+    --texto-fraco: #64748b;
+
+    /* ----------------------------------------------------------------------
+     CORES DE MARCA E DE ESTADO
+     Cada cor tem o tom cheio (uso em texto e borda) e um fundo translúcido
+     para etiquetas e realces, que funciona sobre qualquer superfície.
+     ---------------------------------------------------------------------- */
+    --roxo: #7c6cf5;
+    --roxo-claro: #a79bff;
+    --roxo-fundo: rgb(124 108 245 / 16%);
+
+    --azul: #5b8cff;
+    --azul-fundo: rgb(91 140 255 / 14%);
+
+    --verde: #2dd4a0;
+    --verde-fundo: rgb(45 212 160 / 14%);
+
+    --amarelo: #eab745;
+    --amarelo-fundo: rgb(234 183 69 / 14%);
+
+    --vermelho: #f0637e;
+    --vermelho-fundo: rgb(240 99 126 / 14%);
+
+    /* ----------------------------------------------------------------------
+     TIPOGRAFIA
+     Escala de sete degraus. O corpo do app é --texto-md (14px): abaixo de
+     --texto-xs nada é legível, então não existe degrau menor.
+     ---------------------------------------------------------------------- */
+    --fonte:
+        "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+    --fonte-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", monospace;
+
+    --texto-xs: 0.6875rem; /* 11px — etiquetas e legendas */
+    --texto-sm: 0.75rem; /* 12px — apoio, metadados */
+    --texto-base: 0.8125rem; /* 13px — texto secundário denso */
+    --texto-md: 0.875rem; /* 14px — corpo padrão */
+    --texto-lg: 1rem; /* 16px — títulos de painel */
+    --texto-xl: 1.25rem; /* 20px — título de seção */
+    --texto-2xl: 1.75rem; /* 28px — título de tela */
+    --texto-3xl: 2.25rem; /* 36px — número de destaque */
+
+    --peso-normal: 400;
+    --peso-medio: 500;
+    --peso-forte: 600;
+
+    --altura-apertada: 1.25;
+    --altura-normal: 1.5;
+    --altura-solta: 1.65;
+
+    /* ----------------------------------------------------------------------
+     ESPAÇAMENTO — múltiplos de 4px
+     ---------------------------------------------------------------------- */
+    --esp-1: 0.25rem;
+    --esp-2: 0.5rem;
+    --esp-3: 0.75rem;
+    --esp-4: 1rem;
+    --esp-5: 1.25rem;
+    --esp-6: 1.5rem;
+    --esp-8: 2rem;
+    --esp-10: 2.5rem;
+    --esp-12: 3rem;
+
+    /* ----------------------------------------------------------------------
+     RAIO, SOMBRA E MOVIMENTO
+     ---------------------------------------------------------------------- */
+    --raio-sm: 6px;
+    --raio-md: 10px;
+    --raio-lg: 14px;
+    --raio-pill: 999px;
+
+    --sombra-sm: 0 1px 2px rgb(0 0 0 / 30%);
+    --sombra-md: 0 8px 24px rgb(0 0 0 / 35%);
+    --sombra-lg: 0 24px 60px rgb(0 0 0 / 50%);
+
+    --transicao: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Largura máxima do conteúdo: sem ela, uma tabela numa tela ultrawide
+     vira uma linha de dois metros e ninguém consegue ler. */
+    --largura-conteudo: 1440px;
+
+    --anel-foco: 0 0 0 2px var(--bg), 0 0 0 4px var(--roxo);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--texto);
+    font-family: var(--fonte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-normal);
+    line-height: var(--altura-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-variant-numeric: tabular-nums;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+a {
+    color: var(--roxo-claro);
+    text-decoration: none;
+}
+
+svg {
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Qualquer classe com `display` vence a regra de `[hidden]` do navegador por
+   especificidade, e o elemento continua na tela. Esta regra devolve ao
+   atributo o poder de esconder, que é o que quem escreve o HTML espera. */
+[hidden] {
+    display: none !important;
+}
+
+/* Um anel de foco único para o app inteiro. Só aparece na navegação por
+   teclado, então o mouse continua sem contorno. */
+:focus-visible {
+    outline: none;
+    box-shadow: var(--anel-foco);
+    border-radius: var(--raio-sm);
+}
+
+::selection {
+    background: var(--roxo-fundo);
+    color: var(--texto-forte);
+}
+
+::placeholder {
+    color: var(--texto-fraco);
+}
+
+/* Barras de rolagem discretas, no tom das superfícies */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-forte) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: var(--raio-pill);
+    background: var(--border-forte);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #3b5070;
+    background-clip: padding-box;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Visível para leitores de tela, invisível na página. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

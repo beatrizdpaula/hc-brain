@@ -1,0 +1,740 @@
+/* ==========================================================================
+   COMPONENTES COMPARTILHADOS
+   Peças que aparecem em mais de uma tela: superfícies, botões, campos,
+   etiquetas, tabelas, gráficos de barra e os estados de vazio, carregando
+   e erro. O que é exclusivo de uma tela mora em css/<tela>.css.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   SUPERFÍCIES
+   `.surface` é a moldura base. `.panel` é a variação com cabeçalho e corpo
+   separados, usada por toda tela que lista alguma coisa.
+   -------------------------------------------------------------------------- */
+.surface,
+.metric,
+.card,
+.folder,
+.research-sidebar,
+.recent-searches,
+.result-card,
+.meeting-card,
+.empresa-card,
+.socio-card,
+.fonte-item,
+.mini-meeting,
+.document-card {
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+    transition: var(--transicao);
+}
+
+.metric,
+.card,
+.folder {
+    padding: var(--esp-4);
+}
+
+.metric:hover,
+.card:hover,
+.folder:hover,
+.document-card:hover,
+.result-card:hover,
+.meeting-card:hover,
+.empresa-card:hover,
+.fonte-item:hover,
+.mini-meeting:hover {
+    border-color: var(--border-forte);
+    background: var(--surface-hover);
+}
+
+.panel {
+    overflow: hidden;
+    margin-bottom: var(--esp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    padding: var(--esp-4) var(--esp-5);
+    border-bottom: 1px solid var(--border);
+}
+
+.panel-head h2,
+.panel-head h3 {
+    margin: 0;
+    font-size: var(--texto-md);
+}
+
+.panel-head p {
+    margin: var(--esp-1) 0 0;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.panel-body {
+    padding: var(--esp-4) var(--esp-5);
+}
+
+/* Contagem ao lado do título de um painel ("12 itens"). */
+.panel-count {
+    flex-shrink: 0;
+    padding: var(--esp-1) var(--esp-3);
+    border-radius: var(--raio-pill);
+    background: var(--surface-alto);
+    color: var(--texto-suave);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-medio);
+}
+
+/* Cards que levam para outra página viram link, mas seguem parecendo card. */
+a.card,
+a.shortcut,
+a.empresa-card,
+a.empresa-list-item,
+a.back-button,
+a.document-button {
+    color: inherit;
+    text-decoration: none;
+}
+
+a.shortcut,
+a.card {
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   GRADES DE CARDS
+   -------------------------------------------------------------------------- */
+.card-grid,
+.folders,
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--esp-4);
+}
+
+/* Ícone quadrado dos cartões (documento, pasta, projeto, conteúdo). */
+.icone-quadro,
+.document-icon,
+.folder-icon {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--raio-sm);
+    background: var(--surface-alto);
+    color: var(--texto-suave);
+}
+
+.icone-quadro svg,
+.document-icon svg,
+.folder-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* As cores usam o mesmo vocabulário das etiquetas, então um item pode
+   passar a mesma chave para `.tag` e para o seu ícone. */
+.icone-quadro.purple,
+.folder-icon {
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+}
+
+.icone-quadro.blue {
+    background: var(--azul-fundo);
+    color: var(--azul);
+}
+
+.icone-quadro.green {
+    background: var(--verde-fundo);
+    color: var(--verde);
+}
+
+.icone-quadro.yellow {
+    background: var(--amarelo-fundo);
+    color: var(--amarelo);
+}
+
+.icone-quadro.red {
+    background: var(--vermelho-fundo);
+    color: var(--vermelho);
+}
+
+/* --------------------------------------------------------------------------
+   LISTAS SIMPLES
+   -------------------------------------------------------------------------- */
+.list-item {
+    display: block;
+    width: 100%;
+    padding: var(--esp-3) var(--esp-2);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--raio-sm);
+    background: transparent;
+    color: var(--texto);
+    font-size: var(--texto-base);
+    text-align: left;
+    transition: var(--transicao);
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item:hover {
+    background: var(--surface-hover);
+}
+
+.list-item strong {
+    color: var(--texto-forte);
+    font-weight: var(--peso-medio);
+}
+
+/* --------------------------------------------------------------------------
+   LISTAS EM TABELA
+   -------------------------------------------------------------------------- */
+.list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--esp-2);
+    margin: var(--esp-4) 0 var(--esp-3);
+}
+
+.view-toggle {
+    display: inline-flex;
+    gap: var(--esp-1);
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.view-toggle button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--esp-2);
+    padding: var(--esp-2) var(--esp-3);
+    border: 0;
+    border-radius: var(--raio-sm);
+    background: transparent;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    font-weight: var(--peso-medio);
+    transition: var(--transicao);
+}
+
+.view-toggle button svg {
+    width: 14px;
+    height: 14px;
+}
+
+.view-toggle button:hover {
+    color: var(--texto);
+}
+
+.view-toggle button.active {
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+}
+
+.meetings-list,
+.empresas-list {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.hidden-view {
+    display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   TABELAS
+   -------------------------------------------------------------------------- */
+.tabela-wrap {
+    overflow-x: auto;
+}
+
+.tabela {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+}
+
+.tabela th {
+    padding: var(--esp-3) var(--esp-4);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-alto);
+    color: var(--texto-suave);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.06em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.tabela td {
+    padding: var(--esp-3) var(--esp-4);
+    border-bottom: 1px solid var(--border);
+    color: var(--texto);
+    font-size: var(--texto-base);
+    vertical-align: middle;
+}
+
+.tabela tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.tabela tbody tr:hover td {
+    background: var(--surface-hover);
+}
+
+/* --------------------------------------------------------------------------
+   ETIQUETAS
+   -------------------------------------------------------------------------- */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--esp-1);
+    padding: 3px var(--esp-2);
+    border-radius: var(--raio-pill);
+    background: var(--azul-fundo);
+    color: var(--azul);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-medio);
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.tag.green {
+    background: var(--verde-fundo);
+    color: var(--verde);
+}
+
+.tag.yellow {
+    background: var(--amarelo-fundo);
+    color: var(--amarelo);
+}
+
+.tag.blue {
+    background: var(--azul-fundo);
+    color: var(--azul);
+}
+
+.tag.purple {
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+}
+
+.tag.red {
+    background: var(--vermelho-fundo);
+    color: var(--vermelho);
+}
+
+.tag.gray {
+    background: rgb(148 163 184 / 14%);
+    color: var(--texto-suave);
+}
+
+/* --------------------------------------------------------------------------
+   BOTÕES
+   Três variações: `.primary` para a ação principal, `.secondary` para as
+   demais e `.ghost` para o que é quase um link.
+   -------------------------------------------------------------------------- */
+.primary,
+.secondary,
+.ghost,
+.document-button,
+.research-help,
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--esp-2);
+    height: 36px;
+    padding: 0 var(--esp-4);
+    border: 1px solid transparent;
+    border-radius: var(--raio-sm);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-medio);
+    white-space: nowrap;
+    transition: var(--transicao);
+}
+
+.primary svg,
+.secondary svg,
+.ghost svg,
+.document-button svg,
+.research-help svg,
+.back-button svg {
+    width: 15px;
+    height: 15px;
+}
+
+.primary {
+    border-color: var(--roxo);
+    background: var(--roxo);
+    color: #fff;
+}
+
+.primary:hover {
+    border-color: var(--roxo-claro);
+    background: var(--roxo-claro);
+    color: #10131c;
+}
+
+.secondary,
+.document-button,
+.research-help,
+.back-button {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--texto);
+}
+
+.secondary:hover,
+.document-button:hover,
+.research-help:hover,
+.back-button:hover {
+    border-color: var(--border-forte);
+    background: var(--surface-hover);
+    color: var(--texto-forte);
+}
+
+.ghost,
+.clear-filters {
+    height: 36px;
+    padding: 0 var(--esp-3);
+    border: 1px solid transparent;
+    border-radius: var(--raio-sm);
+    background: transparent;
+    color: var(--roxo-claro);
+    font-size: var(--texto-base);
+    font-weight: var(--peso-medio);
+}
+
+.ghost:hover,
+.clear-filters:hover {
+    background: var(--roxo-fundo);
+}
+
+.clear-filters {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--esp-2);
+}
+
+/* Botão só de ícone (fechar, mais opções, navegar no calendário). */
+.icon-button {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid transparent;
+    border-radius: var(--raio-sm);
+    background: transparent;
+    color: var(--texto-suave);
+    transition: var(--transicao);
+}
+
+.icon-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-button:hover {
+    background: var(--surface-hover);
+    color: var(--texto-forte);
+}
+
+/* Pílulas de sugestão: atalhos do Início e filtros de Pesquisa/Reuniões. */
+.quick button,
+.search-chip {
+    padding: var(--esp-2) var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-pill);
+    background: var(--surface);
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    font-weight: var(--peso-medio);
+    transition: var(--transicao);
+}
+
+.quick button:hover,
+.search-chip:hover {
+    border-color: var(--border-forte);
+    color: var(--texto);
+}
+
+.search-chip.active {
+    border-color: var(--roxo);
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+}
+
+/* --------------------------------------------------------------------------
+   CAMPOS DE FORMULÁRIO
+   Um só visual para input, select e textarea em todas as telas.
+   -------------------------------------------------------------------------- */
+.campo {
+    min-width: 0;
+}
+
+.campo > label,
+.filtro-label {
+    display: block;
+    margin-bottom: var(--esp-2);
+    color: var(--texto-suave);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.campo input,
+.campo select,
+.campo textarea,
+.controle {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-sm);
+    background: var(--surface-alto);
+    color: var(--texto-forte);
+    font-size: var(--texto-base);
+    outline: none;
+    transition: var(--transicao);
+}
+
+.campo textarea {
+    height: auto;
+    padding: var(--esp-3);
+    resize: vertical;
+}
+
+.campo input:hover,
+.campo select:hover,
+.controle:hover {
+    border-color: var(--border-forte);
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus,
+.controle:focus {
+    border-color: var(--roxo);
+    box-shadow: 0 0 0 3px var(--roxo-fundo);
+}
+
+/* Barra de filtros: uma grade de campos com a mesma moldura em toda tela. */
+.filtros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    align-items: end;
+    gap: var(--esp-3);
+    padding: var(--esp-4);
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.filtros .clear-filters {
+    justify-self: start;
+}
+
+/* --------------------------------------------------------------------------
+   CAMPOS DE BUSCA COM ÍCONE
+   -------------------------------------------------------------------------- */
+.advanced-search,
+.document-search {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    padding: 0 var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface-alto);
+    transition: var(--transicao);
+}
+
+.advanced-search:focus-within,
+.document-search:focus-within {
+    border-color: var(--roxo);
+    box-shadow: 0 0 0 3px var(--roxo-fundo);
+}
+
+.advanced-search .search-icon,
+.document-search .search-icon {
+    color: var(--texto-suave);
+}
+
+.advanced-search .search-icon svg,
+.document-search .search-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.advanced-search input,
+.document-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 42px;
+    border: none;
+    background: transparent;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    outline: none;
+}
+
+.document-search {
+    padding: 0 var(--esp-3);
+}
+
+.document-search input {
+    height: 38px;
+    font-size: var(--texto-base);
+}
+
+/* --------------------------------------------------------------------------
+   AVATARES
+   -------------------------------------------------------------------------- */
+.avatar,
+.empresa-avatar {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--raio-md);
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+    font-size: var(--texto-sm);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.02em;
+}
+
+.avatar {
+    border-radius: 50%;
+}
+
+/* --------------------------------------------------------------------------
+   GRÁFICO DE BARRA HORIZONTAL
+   Comercial, Financeiro e o detalhe do cliente desenham a mesma barra.
+   -------------------------------------------------------------------------- */
+.barra {
+    overflow: hidden;
+    height: 8px;
+    border-radius: var(--raio-pill);
+    background: var(--surface-alto);
+}
+
+.barra > span {
+    display: block;
+    height: 100%;
+    border-radius: var(--raio-pill);
+    background: var(--roxo);
+    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.barra.verde > span {
+    background: var(--verde);
+}
+
+.barra.azul > span {
+    background: var(--azul);
+}
+
+.barra.vermelha > span {
+    background: var(--vermelho);
+}
+
+/* --------------------------------------------------------------------------
+   ESTADOS: VAZIO, CARREGANDO E ERRO
+   -------------------------------------------------------------------------- */
+.empty-state {
+    grid-column: 1 / -1;
+    padding: var(--esp-8) var(--esp-6);
+    border: 1px dashed var(--border-forte);
+    border-radius: var(--raio-md);
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    text-align: center;
+}
+
+.estado-carregando {
+    grid-column: 1 / -1;
+    padding: var(--esp-8);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: linear-gradient(
+        90deg,
+        var(--surface),
+        var(--surface-hover),
+        var(--surface)
+    );
+    background-size: 220% 100%;
+    animation: brilho-carregando 1.4s ease-in-out infinite;
+    color: var(--texto-fraco);
+    font-size: var(--texto-base);
+    text-align: center;
+}
+
+@keyframes brilho-carregando {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+.estado-erro {
+    max-width: 560px;
+    padding: var(--esp-8);
+    border: 1px solid var(--vermelho-fundo);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.estado-erro h2 {
+    margin-bottom: var(--esp-2);
+    color: var(--vermelho);
+}
+
+.estado-erro p {
+    margin-bottom: var(--esp-5);
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    line-height: var(--altura-solta);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVO
+   -------------------------------------------------------------------------- */
+@media (max-width: 550px) {
+    .card-grid,
+    .documents-grid,
+    .folders {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header-actions .primary,
+    .page-header-actions .secondary,
+    .page-header-actions .document-button {
+        flex: 1;
+    }
+}

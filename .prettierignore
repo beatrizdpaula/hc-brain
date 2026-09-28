@@ -1,0 +1,6 @@
+public/build
+vendor
+node_modules
+database/database.sqlite
+composer.lock
+package-lock.json

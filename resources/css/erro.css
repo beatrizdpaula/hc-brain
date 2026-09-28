@@ -1,0 +1,93 @@
+/* ==========================================================================
+   PÁGINAS DE ERRO
+   Um cartão centralizado com a marca, o código, a explicação e o caminho de
+   volta. Só depende de base.css: nada aqui carrega dados.
+   ========================================================================== */
+
+.erro {
+    display: grid;
+    min-height: 100vh;
+    padding: var(--esp-6);
+    background:
+        radial-gradient(circle at 50% 0%, rgb(124 108 245 / 12%), transparent 60%),
+        var(--bg);
+    place-items: center;
+}
+
+.erro-card {
+    width: min(520px, 100%);
+    padding: var(--esp-10);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-lg);
+    background: var(--surface);
+    box-shadow: var(--sombra-lg);
+    text-align: center;
+}
+
+.erro-marca {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--esp-2);
+    margin-bottom: var(--esp-8);
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+}
+
+.erro-marca-mark {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--raio-sm);
+    background: linear-gradient(135deg, var(--roxo), var(--azul));
+    color: #fff;
+    font-size: var(--texto-xs);
+    place-items: center;
+}
+
+.erro-codigo {
+    color: var(--roxo-claro);
+    font-size: var(--texto-3xl);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.erro-card h1 {
+    margin: var(--esp-3) 0 var(--esp-2);
+    color: var(--texto-forte);
+    font-size: var(--texto-xl);
+    font-weight: var(--peso-forte);
+}
+
+.erro-texto {
+    color: var(--texto-suave);
+    font-size: var(--texto-md);
+    line-height: var(--altura-solta);
+}
+
+.erro-voltar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 var(--esp-5);
+    margin-top: var(--esp-6);
+    border-radius: var(--raio-sm);
+    background: var(--roxo);
+    color: #fff;
+    font-size: var(--texto-md);
+    font-weight: var(--peso-medio);
+    transition: var(--transicao);
+}
+
+.erro-voltar:hover {
+    background: var(--roxo-claro);
+    color: #10131c;
+}
+
+@media (max-width: 550px) {
+    .erro-card {
+        padding: var(--esp-6);
+    }
+}
