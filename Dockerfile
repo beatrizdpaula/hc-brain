@@ -34,6 +34,9 @@ RUN composer install \
 # Cria o banco SQLite
 RUN touch database/database.sqlite
 
+# Cria as tabelas do banco
+RUN php artisan migrate --force
+
 # Dependências do JavaScript
 RUN npm install
 
