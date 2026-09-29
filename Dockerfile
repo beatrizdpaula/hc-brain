@@ -9,6 +9,7 @@ RUN apt-get update && \
         ca-certificates \
         libicu-dev \
         libzip-dev \
+        libsqlite3-dev \
         libxml2-dev \
         libcurl4-openssl-dev \
         unzip \
