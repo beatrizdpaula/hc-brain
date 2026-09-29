@@ -1,23 +1,45 @@
-FROM dunglas/frankenphp:php8.5
+FROM php:8.5-apache
 
 WORKDIR /app
 
-# Extensões PHP
-RUN install-php-extensions \
+# Dependências do sistema e PHP
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        ca-certificates \
+        libicu-dev \
+        libzip-dev \
+        libxml2-dev \
+        libcurl4-openssl-dev \
+        unzip \
+        && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install \
     pdo_sqlite \
     mbstring \
     bcmath \
     intl \
     zip \
-    opcache
+    opcache \
+    curl \
+    xml
+
+# Apache: habilita URLs do Laravel
+RUN a2enmod rewrite
+
+# Faz o Apache servir a pasta public/
+ENV APACHE_DOCUMENT_ROOT=/app/public
+
+RUN sed -ri \
+    -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/sites-available/000-default.conf \
+    /etc/apache2/apache2.conf
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Node.js + npm
-RUN apt-get update && \
-    apt-get install -y curl ca-certificates && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -25,19 +47,19 @@ RUN apt-get update && \
 # Copia o projeto
 COPY . .
 
-# Dependências do Laravel
+# Dependências PHP
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction
 
-# Cria o banco SQLite
+# Banco SQLite
 RUN touch database/database.sqlite
 
-# Cria as tabelas do banco
+# Cria as tabelas
 RUN php artisan migrate --force
 
-# Dependências do JavaScript
+# Dependências JavaScript
 RUN npm install
 
 # Compila TypeScript + Vite
@@ -52,11 +74,10 @@ RUN mkdir -p \
 
 RUN chmod -R 775 storage bootstrap/cache
 
-# Limpa caches
+# Limpa os caches
 RUN php artisan optimize:clear
 
-# Porta do Render
+# Render usa PORT=10000 por padrão
 EXPOSE 10000
 
-# Inicia o Laravel
-CMD ["sh", "-c", "php artisan migrate --force && frankenphp php-server --listen 0.0.0.0:${PORT:-10000} -r public/"]
+CMD ["sh", "-c", "php artisan migrate --force && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
