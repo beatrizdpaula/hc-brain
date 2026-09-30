@@ -71,8 +71,10 @@ RUN mkdir -p \
     chown -R www-data:www-data storage bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
 
-# Limpa os caches
-RUN php artisan optimize:clear
+# Otimiza rotas e configurações sem tentar limpar a base de dados
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 
 # Render usa PORT=10000 por padrão
 EXPOSE 10000
