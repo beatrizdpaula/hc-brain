@@ -5,11 +5,32 @@
    ========================================================================== */
 
 .research-box {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-4);
     padding: var(--esp-4);
     margin-bottom: var(--esp-5);
     border: 1px solid var(--border);
     border-radius: var(--raio-md);
     background: var(--surface);
+}
+
+/* A linha "Buscar em" só existe nesta tela. O visual das pílulas vem de
+   componentes.css; o arranjo (espaço abaixo da barra e entre os chips) fica aqui. */
+.research-box .quick {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--esp-2);
+}
+
+.research-box .filtro-inline-label {
+    margin-right: var(--esp-1);
+    color: var(--texto-suave);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .advanced-search .search-submit {
