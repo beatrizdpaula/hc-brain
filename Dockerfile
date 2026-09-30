@@ -10,6 +10,7 @@ RUN apt-get update && \
         libicu-dev \
         libzip-dev \
         libsqlite3-dev \
+        libonig-dev \
         libxml2-dev \
         libcurl4-openssl-dev \
         unzip \
@@ -54,11 +55,9 @@ RUN composer install \
     --optimize-autoloader \
     --no-interaction
 
-# Banco SQLite
-RUN touch database/database.sqlite
-
-# Cria as tabelas
-RUN php artisan migrate --force
+# Banco SQLite e permissões
+RUN touch database/database.sqlite && \
+    chown -R www-data:www-data database/
 
 # Dependências JavaScript
 RUN npm install
@@ -66,14 +65,14 @@ RUN npm install
 # Compila TypeScript + Vite
 RUN npm run build
 
-# Pastas necessárias do Laravel
+# Pastas necessárias do Laravel com permissões para o Apache
 RUN mkdir -p \
     storage/framework/cache \
     storage/framework/sessions \
     storage/framework/views \
-    bootstrap/cache
-
-RUN chmod -R 775 storage bootstrap/cache
+    bootstrap/cache && \
+    chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
 # Limpa os caches
 RUN php artisan optimize:clear
