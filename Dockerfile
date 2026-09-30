@@ -26,13 +26,18 @@ RUN docker-php-ext-install \
 # Apache: habilita URLs do Laravel
 RUN a2enmod rewrite
 
-# Faz o Apache servir a pasta public/
+# Faz o Apache servir a pasta public/ e concede permissão de acesso ao diretório
 ENV APACHE_DOCUMENT_ROOT=/app/public
 
 RUN sed -ri \
     -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
     /etc/apache2/sites-available/000-default.conf \
-    /etc/apache2/apache2.conf
+    /etc/apache2/apache2.conf && \
+    echo '<Directory /app/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/apache2.conf
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -71,7 +76,7 @@ RUN mkdir -p \
     chown -R www-data:www-data storage bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
 
-# Otimiza rotas e configurações sem tentar limpar a base de dados
+# Otimiza rotas e configurações
 RUN php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache
