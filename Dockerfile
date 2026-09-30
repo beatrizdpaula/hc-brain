@@ -16,7 +16,7 @@ RUN apt-get update && \
         unzip \
         && rm -rf /var/lib/apt/lists/*
 
-# Instala apenas as extensões necessárias que não vêm ativas por padrão
+# Instala apenas as extensões necessárias
 RUN docker-php-ext-install \
     pdo_sqlite \
     bcmath \
@@ -26,7 +26,7 @@ RUN docker-php-ext-install \
 # Apache: habilita URLs do Laravel
 RUN a2enmod rewrite
 
-# Faz o Apache servir a pasta public/ e concede permissão de acesso ao diretório
+# Configura o Apache para a pasta public/
 ENV APACHE_DOCUMENT_ROOT=/app/public
 
 RUN sed -ri \
@@ -57,31 +57,10 @@ RUN composer install \
     --optimize-autoloader \
     --no-interaction
 
-# Banco SQLite e permissões
-RUN touch database/database.sqlite && \
-    chown -R www-data:www-data database/
-
-# Dependências JavaScript
-RUN npm install
-
-# Compila TypeScript + Vite
-RUN npm run build
-
-# Pastas necessárias do Laravel com permissões para o Apache
-RUN mkdir -p \
-    storage/framework/cache \
-    storage/framework/sessions \
-    storage/framework/views \
-    bootstrap/cache && \
-    chown -R www-data:www-data storage bootstrap/cache && \
-    chmod -R 775 storage bootstrap/cache
-
-# Otimiza rotas e configurações
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+# Dependências JavaScript e Build
+RUN npm install && npm run build
 
 # Render usa PORT=10000 por padrão
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan migrate --force && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
+CMD ["sh", "-c", "mkdir -p database storage/logs storage/framework/{cache,sessions,views} bootstrap/cache && touch database/database.sqlite && chown -R www-data:www-data database storage bootstrap/cache && chmod -R 777 storage bootstrap/cache database && php artisan migrate --force && php artisan config:clear && php artisan route:clear && php artisan view:clear && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
