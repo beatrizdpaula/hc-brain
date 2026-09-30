@@ -26,18 +26,8 @@ RUN docker-php-ext-install \
 # Apache: habilita URLs do Laravel
 RUN a2enmod rewrite
 
-# Configura o Apache para a pasta public/
-ENV APACHE_DOCUMENT_ROOT=/app/public
-
-RUN sed -ri \
-    -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
-    /etc/apache2/sites-available/000-default.conf \
-    /etc/apache2/apache2.conf && \
-    echo '<Directory /app/public>\n\
-    Options Indexes FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>' >> /etc/apache2/apache2.conf
+# Copia a configuração do Apache
+COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -60,7 +50,10 @@ RUN composer install \
 # Dependências JS e Build do Vite
 RUN npm install && npm run build
 
+# Torna o script de entrada executavel
+RUN chmod +x docker/entrypoint.sh
+
 # Render usa PORT=10000 por padrão
 EXPOSE 10000
 
-CMD ["sh", "-c", "rm -f bootstrap/cache/*.php && mkdir -p database storage/logs storage/framework/sessions storage/framework/views storage/framework/cache/data bootstrap/cache && touch database/database.sqlite && php artisan storage:link --force || true && chown -R www-data:www-data /app/public database storage bootstrap/cache && chmod -R 777 /app/public storage bootstrap/cache database && php artisan migrate --seed --force || true && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
+ENTRYPOINT ["docker/entrypoint.sh"]
