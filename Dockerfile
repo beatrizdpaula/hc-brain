@@ -16,7 +16,7 @@ RUN apt-get update && \
         unzip \
         && rm -rf /var/lib/apt/lists/*
 
-# Instala apenas as extensões necessárias
+# Instala extensões PHP
 RUN docker-php-ext-install \
     pdo_sqlite \
     bcmath \
@@ -57,10 +57,10 @@ RUN composer install \
     --optimize-autoloader \
     --no-interaction
 
-# Dependências JavaScript e Build
+# Dependências JS e Build do Vite
 RUN npm install && npm run build
 
 # Render usa PORT=10000 por padrão
 EXPOSE 10000
 
-CMD ["sh", "-c", "mkdir -p database storage/logs storage/framework/{cache,sessions,views} bootstrap/cache && touch database/database.sqlite && chown -R www-data:www-data database storage bootstrap/cache && chmod -R 777 storage bootstrap/cache database && php artisan migrate --force && php artisan config:clear && php artisan route:clear && php artisan view:clear && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
+CMD ["sh", "-c", "mkdir -p database storage/logs storage/framework/{cache,sessions,views} bootstrap/cache && touch database/database.sqlite && php artisan storage:link --force && chown -R www-data:www-data /app/public database storage bootstrap/cache && chmod -R 775 /app/public storage bootstrap/cache database && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan migrate --force && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
