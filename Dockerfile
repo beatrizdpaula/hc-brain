@@ -16,15 +16,12 @@ RUN apt-get update && \
         unzip \
         && rm -rf /var/lib/apt/lists/*
 
+# Instala apenas as extensões necessárias que não vêm ativas por padrão
 RUN docker-php-ext-install \
     pdo_sqlite \
-    mbstring \
     bcmath \
     intl \
-    zip \
-    opcache \
-    curl \
-    xml
+    zip
 
 # Apache: habilita URLs do Laravel
 RUN a2enmod rewrite
