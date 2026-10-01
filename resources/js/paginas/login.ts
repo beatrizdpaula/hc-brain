@@ -21,3 +21,16 @@ if (loginEmail.value) {
 const esconderErro = () => loginError.classList.remove("show");
 loginEmail.addEventListener("input", esconderErro);
 loginPassword.addEventListener("input", esconderErro);
+
+const verSenha = porId("verSenha");
+
+verSenha.addEventListener("click", () => {
+    const escondida = loginPassword.type === "password";
+
+    loginPassword.type = escondida ? "text" : "password";
+    verSenha.textContent = escondida ? "Ocultar" : "Mostrar";
+    verSenha.setAttribute("aria-pressed", String(escondida));
+
+    // Quem clicou quer continuar digitando, não perder o cursor para o botão.
+    loginPassword.focus();
+});

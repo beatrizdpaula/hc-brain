@@ -105,6 +105,40 @@
     border-color: var(--border-forte);
 }
 
+/* O botão de ver a senha fica dentro do campo, no lugar do cursor parado. */
+.login-senha {
+    position: relative;
+}
+
+.login-senha input {
+    padding-right: 72px;
+}
+
+.login-senha button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 42px;
+    padding: 0 var(--esp-3);
+    border: none;
+    background: none;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+    font-weight: var(--peso-medio);
+    cursor: pointer;
+    transition: var(--transicao);
+}
+
+.login-senha button:hover {
+    color: var(--texto-forte);
+}
+
+.login-senha button:focus-visible {
+    border-radius: var(--raio-sm);
+    outline: 2px solid var(--roxo);
+    outline-offset: -2px;
+}
+
 .login-field input:focus {
     border-color: var(--roxo);
     box-shadow: 0 0 0 3px var(--roxo-fundo);

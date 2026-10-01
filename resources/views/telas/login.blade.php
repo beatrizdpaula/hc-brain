@@ -43,14 +43,21 @@
 
         <div class="login-field">
           <label for="loginPassword">Senha</label>
-          <input
-            id="loginPassword"
-            name="password"
-            type="password"
-            autocomplete="current-password"
-            placeholder="Digite sua senha"
-            required
-          />
+          {{-- Ver a senha evita a dúvida de quem digitou errado ou recebeu
+               do navegador um preenchimento automático antigo. --}}
+          <div class="login-senha">
+            <input
+              id="loginPassword"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Digite sua senha"
+              required
+            />
+            <button type="button" id="verSenha" aria-controls="loginPassword" aria-pressed="false">
+              Mostrar
+            </button>
+          </div>
         </div>
 
         <div class="login-options">
