@@ -39,10 +39,10 @@ interface ReconhecimentoDeVoz {
 
 type ConstrutorDeReconhecimento = new () => ReconhecimentoDeVoz;
 
-iniciarPagina("sofia-ia");
+const usuario = iniciarPagina("sofia-ia");
 
 const tela = porId("sofiaTela");
-const palco = porId("sofiaPalco");
+const coluna = porId("sofiaColuna");
 const lista = porId("sofiaConversas");
 const titulo = porId("sofiaTituloConversa");
 const chat = porId("chat");
@@ -55,8 +55,13 @@ const anexoNome = porId("sofiaAttachmentName");
 const arquivos = campo("sofiaFileInput");
 const modoPesquisa = porId("sofiaSearchMode");
 const modoBase = porId("sofiaComputerMode");
-const notaModo = porId("sofiaModeNote");
 const fundoHistorico = porId("sofiaHistoricoFundo");
+const buscaWrap = porId("sofiaBuscaWrap");
+const buscaChats = porId<HTMLInputElement>("sofiaBuscaChats");
+
+porId("sofiaUsuarioAvatar").textContent = usuario.iniciais;
+porId("sofiaUsuarioNome").textContent = usuario.nome;
+porId("sofiaUsuarioPerfil").textContent = usuario.perfil;
 
 /** Chats que ainda estão esperando a resposta da Sofia. */
 const aguardando = new Set<string>();
@@ -68,17 +73,6 @@ function novoId(): string {
 function conversaAberta(): ConversaSofia | null {
     const { conversaAtiva, conversas } = obterSecao("sofia");
     return conversas.find((conversa) => conversa.id === conversaAtiva) ?? null;
-}
-
-function grupoDaData(quando: number): "Hoje" | "Ontem" | "Anteriores" {
-    const data = new Date(quando);
-    const hoje = new Date();
-    const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-    const inicioOntem = new Date(inicioHoje);
-    inicioOntem.setDate(inicioOntem.getDate() - 1);
-    if (data >= inicioHoje) return "Hoje";
-    if (data >= inicioOntem) return "Ontem";
-    return "Anteriores";
 }
 
 function fecharHistorico(): void {
@@ -102,7 +96,7 @@ function atualizarEnvio(): void {
     envio.disabled = ocupada || entrada.value.trim() === "";
 }
 
-function htmlMensagem(mensagem: MensagemSofia): string {
+function htmlMensagem(mensagem: MensagemSofia, indice: number): string {
     if (mensagem.autor === "user") {
         return `<div class="message user"><div class="message-texto">${escapar(mensagem.texto)}</div></div>`;
     }
@@ -110,7 +104,10 @@ function htmlMensagem(mensagem: MensagemSofia): string {
     return `
       <div class="message bot">
         <span class="sofia-avatar" aria-hidden="true">S</span>
-        <div class="message-texto">${escapar(mensagem.texto)}</div>
+        <div class="message-corpo">
+          <div class="message-texto">${escapar(mensagem.texto)}</div>
+          <button type="button" class="sofia-copiar" data-copiar="${indice}">Copiar</button>
+        </div>
       </div>
     `;
 }
@@ -124,13 +121,14 @@ function renderConversa(): void {
     chat.innerHTML =
         mensagens.map(htmlMensagem).join("") +
         (pensando
-            ? `<div class="message bot"><span class="sofia-avatar" aria-hidden="true">S</span><div class="message-texto"><span class="sofia-digitando"><i></i><i></i><i></i></span></div></div>`
+            ? `<div class="message bot"><span class="sofia-avatar" aria-hidden="true">S</span><div class="message-corpo"><div class="message-texto"><span class="sofia-digitando"><i></i><i></i><i></i></span></div></div></div>`
             : "");
 
     chat.classList.toggle("active", conversando);
-    palco.classList.toggle("em-conversa", conversando);
+    coluna.classList.toggle("em-conversa", conversando);
     boasVindas.hidden = conversando;
     sugestoes.hidden = conversando;
+    titulo.hidden = !conversando;
     titulo.textContent = aberta?.titulo ?? "Novo chat";
 
     if (conversando) chat.scrollTop = chat.scrollHeight;
@@ -139,43 +137,35 @@ function renderConversa(): void {
 
 function renderHistorico(): void {
     const { conversaAtiva, conversas } = obterSecao("sofia");
-    const ordem = [...conversas].sort((a, b) => b.atualizadoEm - a.atualizadoEm);
+    const termo = buscaChats.value.trim().toLowerCase();
+    const ordem = [...conversas]
+        .sort((a, b) => b.atualizadoEm - a.atualizadoEm)
+        .filter((conversa) => conversa.titulo.toLowerCase().includes(termo));
 
     if (!ordem.length) {
-        lista.innerHTML = `<p class="sofia-historico-vazio">Seus chats aparecem aqui.</p>`;
+        lista.innerHTML = `<p class="sofia-historico-vazio">${
+            termo ? "Nenhum chat com esse nome." : "Nenhum chat ainda."
+        }</p>`;
         return;
     }
 
-    const grupos = ["Hoje", "Ontem", "Anteriores"] as const;
-    lista.innerHTML = grupos
-        .map((nome) => {
-            const itens = ordem.filter(
-                (conversa) => grupoDaData(conversa.atualizadoEm) === nome,
-            );
-            if (!itens.length) return "";
-
+    lista.innerHTML = ordem
+        .map((conversa) => {
+            const ativa = conversa.id === conversaAtiva ? " ativa" : "";
             return `
-              <p class="sofia-historico-grupo">${nome}</p>
-              ${itens
-                  .map((conversa) => {
-                      const ativa = conversa.id === conversaAtiva ? " ativa" : "";
-                      return `
-                        <div class="sofia-conversa${ativa}">
-                          <button type="button" class="sofia-conversa-abrir" data-conversa="${escapar(conversa.id)}">
-                            ${escapar(conversa.titulo)}
-                          </button>
-                          <button
-                            type="button"
-                            class="icon-button sofia-conversa-apagar"
-                            data-apagar="${escapar(conversa.id)}"
-                            aria-label="Apagar chat ${escapar(conversa.titulo)}"
-                          >
-                            ${icone("trash-2")}
-                          </button>
-                        </div>
-                      `;
-                  })
-                  .join("")}
+              <div class="sofia-conversa${ativa}">
+                <button type="button" class="sofia-conversa-abrir" data-conversa="${escapar(conversa.id)}">
+                  ${escapar(conversa.titulo)}
+                </button>
+                <button
+                  type="button"
+                  class="icon-button sofia-conversa-apagar"
+                  data-apagar="${escapar(conversa.id)}"
+                  aria-label="Apagar chat ${escapar(conversa.titulo)}"
+                >
+                  ${icone("trash-2")}
+                </button>
+              </div>
             `;
         })
         .join("");
@@ -309,10 +299,6 @@ function renderSugestoes(itens: { icon: string; text: string }[]): void {
 function aplicarModo(modo: ModoSofia): void {
     modoPesquisa.classList.toggle("active", modo === "search");
     modoBase.classList.toggle("active", modo === "base");
-    notaModo.textContent =
-        modo === "search"
-            ? "Pesquisa ativada: a Sofia priorizará informações da base de conhecimento da HC."
-            : "Base HC ativada: a Sofia priorizará documentos, empresas, reuniões e registros internos.";
 }
 
 porId<HTMLFormElement>("chatForm").addEventListener("submit", (evento) => {
@@ -333,9 +319,37 @@ entrada.addEventListener("keydown", (evento) => {
 });
 
 porId("sofiaNovaConversa").addEventListener("click", novoChat);
-porId("sofiaNovaConversaTopo").addEventListener("click", novoChat);
 porId("sofiaAbrirHistorico").addEventListener("click", abrirHistorico);
 fundoHistorico.addEventListener("click", fecharHistorico);
+
+porId("sofiaBuscaBtn").addEventListener("click", () => {
+    buscaWrap.hidden = !buscaWrap.hidden;
+    if (buscaWrap.hidden) {
+        buscaChats.value = "";
+        renderHistorico();
+        return;
+    }
+    buscaChats.focus();
+});
+
+buscaChats.addEventListener("input", () => renderHistorico());
+
+chat.addEventListener("click", (evento) => {
+    const botao = alvoMaisProximo<HTMLButtonElement>(evento, "[data-copiar]");
+    if (!botao) return;
+    const indice = Number(dado(botao, "copiar"));
+    const texto = conversaAberta()?.mensagens[indice]?.texto ?? "";
+    if (!texto) return;
+
+    void navigator.clipboard.writeText(texto).then(() => {
+        botao.textContent = "Copiado";
+        botao.classList.add("copiado");
+        window.setTimeout(() => {
+            botao.textContent = "Copiar";
+            botao.classList.remove("copiado");
+        }, 1500);
+    });
+});
 
 lista.addEventListener("click", (evento) => {
     const apagar = alvoMaisProximo(evento, "[data-apagar]");
@@ -401,7 +415,14 @@ porId("sofiaMicBtn").addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (evento) => {
-    if (evento.key === "Escape") fecharHistorico();
+    if (evento.key !== "Escape") return;
+    if (!buscaWrap.hidden) {
+        buscaWrap.hidden = true;
+        buscaChats.value = "";
+        renderHistorico();
+        return;
+    }
+    fecharHistorico();
 });
 
 observarEstado(["sofia"], () => {
