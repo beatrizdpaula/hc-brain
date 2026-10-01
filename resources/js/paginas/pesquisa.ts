@@ -27,7 +27,8 @@ const resultType = selecao("resultType");
 const resultArea = selecao("resultArea");
 const resultPeriod = selecao("resultPeriod");
 
-const HOJE = new Date("2026-09-11T00:00:00");
+const HOJE = new Date();
+HOJE.setHours(0, 0, 0, 0);
 
 const researchData = await carregarPesquisa();
 

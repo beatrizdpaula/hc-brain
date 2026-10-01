@@ -2,7 +2,7 @@
    REUNIÕES — histórico central, vinculado à empresa e ao sócio
    ========================================================= */
 
-import { obter } from "../comum/api.ts";
+import { atualizar, enviar, obter, remover } from "../comum/api.ts";
 import type { CorTag } from "./empresas.ts";
 
 export type TipoReuniao =
@@ -29,10 +29,29 @@ export interface Reuniao {
     status: StatusReuniao;
 }
 
+/** A empresa como o filtro e o cadastro precisam dela: nome para ler, id para gravar. */
+export interface EmpresaDaReuniao {
+    id: string;
+    nome: string;
+}
+
 export interface BaseReunioes {
     reunioes: Reuniao[];
-    /** Nomes das empresas, para montar o filtro da tela. */
-    empresas: string[];
+    empresas: EmpresaDaReuniao[];
+}
+
+/** O que o formulário de reunião envia; o id fica fora porque vai na URL. */
+export interface DadosDeReuniao {
+    empresaId: string;
+    tipo: string;
+    data: string;
+    horario: string | null;
+    responsavel: string;
+    status: string;
+    resumo: string;
+    participantes: string[];
+    decisoes: string[];
+    proximosPassos: string[];
 }
 
 export const tagDoTipoDeReuniao: Record<TipoReuniao, CorTag> = {
@@ -50,6 +69,32 @@ export const tagDoStatus: Record<StatusReuniao, CorTag> = {
     Cancelada: "red",
 };
 
+/** Os tipos e os status aceitos, na ordem em que aparecem nos formulários. */
+export const TIPOS_DE_REUNIAO: TipoReuniao[] = [
+    "Abertura",
+    "Transferência",
+    "Dúvidas",
+    "Comercial",
+    "Alinhamento",
+    "Financeira",
+];
+
+export const STATUS_DE_REUNIAO: StatusReuniao[] = ["Agendada", "Concluída", "Cancelada"];
+
 export function carregarReunioes(): Promise<BaseReunioes> {
     return obter<BaseReunioes>("/reunioes");
+}
+
+export async function cadastrarReuniao(dados: DadosDeReuniao): Promise<Reuniao> {
+    const resposta = await enviar<{ data: Reuniao }>("/reunioes", dados);
+    return resposta.data;
+}
+
+export async function salvarReuniao(id: number, dados: DadosDeReuniao): Promise<Reuniao> {
+    const resposta = await atualizar<{ data: Reuniao }>(`/reunioes/${id}`, dados);
+    return resposta.data;
+}
+
+export function excluirReuniao(id: number): Promise<void> {
+    return remover(`/reunioes/${id}`);
 }

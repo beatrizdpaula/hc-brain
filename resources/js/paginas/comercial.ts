@@ -7,6 +7,7 @@
 
 import {
     carregarComercial,
+    carregarPeriodosComerciais,
     type IndicadoresComerciais,
     type OrigemLead,
 } from "../dados/comercial.ts";
@@ -18,6 +19,15 @@ import { iniciarPagina } from "../comum/shell.ts";
 iniciarPagina("comercial");
 
 const filtroPeriodo = selecao("commercialMonthFilter");
+
+// O filtro lista os meses fechados na base. Sem nenhum, não há indicador a
+// mostrar — e a tela diz isso em vez de ficar carregando para sempre.
+const periodos = await carregarPeriodosComerciais();
+
+filtroPeriodo.innerHTML = periodos
+    .map(({ id, rotulo }) => `<option value="${id}">${rotulo}</option>`)
+    .join("");
+filtroPeriodo.disabled = periodos.length === 0;
 
 function gradienteOrigens(origens: OrigemLead[], total: number): string {
     let cursor = 0;
@@ -33,6 +43,20 @@ function porcentagem(valor: number): string {
     return `${valor.toFixed(1).replace(".", ",")}%`;
 }
 
+/** A comparação com o mês anterior, quando existe um mês anterior na base. */
+function variacaoDeLeads(dados: IndicadoresComerciais): string {
+    if (!dados.leadsAnteriores) {
+        return `<span>primeiro mês da base</span>`;
+    }
+
+    const variacao =
+        ((dados.leads - dados.leadsAnteriores) / dados.leadsAnteriores) * 100;
+    const direcao = variacao < 0 ? "down" : "up";
+    const sinal = variacao < 0 ? "" : "+";
+
+    return `<span class="commercial-delta ${direcao}">${sinal}${porcentagem(variacao)}</span><span>vs. mês anterior</span>`;
+}
+
 function renderComercial(dados: IndicadoresComerciais): void {
     const conversao = dados.leads ? (dados.closed / dados.leads) * 100 : 0;
     const qualificacao = dados.leads ? (dados.qualified / dados.leads) * 100 : 0;
@@ -40,7 +64,7 @@ function renderComercial(dados: IndicadoresComerciais): void {
     const perdas = dados.losses.reduce((soma, [, valor]) => soma + valor, 0);
 
     porId("commercialKpis").innerHTML = `
-    <div class="commercial-kpi"><span class="commercial-kpi-label">Leads recebidos</span><strong class="commercial-kpi-value">${dados.leads}</strong><div class="commercial-kpi-foot"><span class="commercial-delta up">+15,9%</span><span>vs. mês anterior</span></div></div>
+    <div class="commercial-kpi"><span class="commercial-kpi-label">Leads recebidos</span><strong class="commercial-kpi-value">${dados.leads}</strong><div class="commercial-kpi-foot">${variacaoDeLeads(dados)}</div></div>
     <div class="commercial-kpi"><span class="commercial-kpi-label">Leads qualificados</span><strong class="commercial-kpi-value">${dados.qualified}</strong><div class="commercial-kpi-foot"><span class="commercial-delta up">${porcentagem(qualificacao)}</span><span>qualificação</span></div></div>
     <div class="commercial-kpi"><span class="commercial-kpi-label">Vendas fechadas</span><strong class="commercial-kpi-value">${dados.closed}</strong><div class="commercial-kpi-foot"><span class="commercial-delta up">${porcentagem(conversao)}</span><span>de conversão</span></div></div>
     <div class="commercial-kpi"><span class="commercial-kpi-label">Receita fechada</span><strong class="commercial-kpi-value">${moeda(dados.revenue)}</strong><div class="commercial-kpi-foot"><span>ticket médio</span><span>${moeda(dados.averageTicket)}</span></div></div>
@@ -149,6 +173,12 @@ function renderComercial(dados: IndicadoresComerciais): void {
 }
 
 async function carregarEExibir(): Promise<void> {
+    if (!periodos.length) {
+        porId("commercialKpis").innerHTML =
+            `<div class="empty-state">Nenhum período comercial fechado na base ainda.</div>`;
+        return;
+    }
+
     renderComercial(await carregarComercial(obterSecao("comercial").periodo));
 }
 

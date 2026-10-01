@@ -70,6 +70,12 @@ export function mesPorExtenso(data: Date): string {
     return `${mes[0].toUpperCase()}${mes.slice(1)} de ${data.getFullYear()}`;
 }
 
+/** "2026-12-01" vira "01/12/2026", sem passar por `Date` e seu fuso. */
+export function dataCurta(iso: string): string {
+    const [ano, mes, dia] = iso.split("-");
+    return dia ? `${dia}/${mes}/${ano}` : iso;
+}
+
 /** Escapa texto antes de injetar em template de HTML. */
 export function escapar(texto: unknown): string {
     return String(texto ?? "").replace(/[&<>"']/g, (char) => ESCAPES[char] ?? char);

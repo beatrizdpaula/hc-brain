@@ -63,6 +63,11 @@
     gap: var(--esp-8);
 }
 
+.empresa-header-actions {
+    display: flex;
+    gap: var(--esp-3);
+}
+
 .empresa-quick-stats dt {
     color: var(--texto-fraco);
     font-size: var(--texto-xs);

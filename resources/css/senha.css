@@ -1,0 +1,25 @@
+/* ==========================================================================
+   RECUPERAÇÃO DE ACESSO
+   As duas telas de senha são o mesmo cartão do login com outro formulário
+   dentro, então elas herdam a folha de lá e acrescentam só o que é próprio:
+   o aviso de link enviado e o caminho de volta.
+   ========================================================================== */
+
+@import "./login.css";
+
+.login-rodape {
+    padding-top: var(--esp-4);
+    margin-top: var(--esp-6);
+    border-top: 1px solid var(--border);
+    font-size: var(--texto-base);
+    text-align: center;
+}
+
+.login-rodape a {
+    color: var(--roxo-claro);
+    text-decoration: none;
+}
+
+.login-rodape a:hover {
+    text-decoration: underline;
+}

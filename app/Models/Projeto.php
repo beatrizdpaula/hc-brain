@@ -14,6 +14,10 @@ class Projeto extends Model
 {
     protected $table = 'projetos';
 
+    public const STATUS = ['Em andamento', 'Em revisão', 'Planejado', 'Concluído'];
+
+    public const PRIORIDADES = ['Alta', 'Média', 'Baixa'];
+
     public $incrementing = false;
 
     protected $keyType = 'string';

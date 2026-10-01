@@ -18,11 +18,8 @@
       </div>
       <div class="commercial-period">
         <label for="commercialMonthFilter">Período</label>
-        <select id="commercialMonthFilter">
-          <option value="2026-09">Setembro 2026</option>
-          <option value="2026-08">Agosto 2026</option>
-          <option value="2026-07">Julho 2026</option>
-        </select>
+        {{-- As opções são os meses que existem na base; o script as monta. --}}
+        <select id="commercialMonthFilter"></select>
       </div>
     </div>
 

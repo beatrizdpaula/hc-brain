@@ -9,7 +9,7 @@
    leem empresa, sócio e fonte exatamente como antes.
    ========================================================= */
 
-import { obter, obterColecao } from "../comum/api.ts";
+import { atualizar, enviar, obter, obterColecao, remover } from "../comum/api.ts";
 import type { Reuniao } from "./reunioes.ts";
 import type { ConteudoTreinamento } from "./treinamentos.ts";
 
@@ -85,7 +85,7 @@ export interface DetalheEmpresa {
     empresa: Empresa;
     reunioes: Reuniao[];
     treinamentos: ConteudoTreinamento[];
-    /** Nem toda empresa tem extrato financeiro no protótipo. */
+    /** Nem toda empresa tem relacionamento financeiro registrado. */
     financeiro: FinanceiroEmpresa | null;
 }
 
@@ -116,12 +116,55 @@ export const corDoRegime: Record<string, string> = {
 /** Usada quando o regime não está no mapa acima. */
 export const COR_PADRAO_DO_GRAFICO = "var(--texto-fraco)";
 
+/** As cores de status que a API aceita, na ordem em que fazem sentido oferecer. */
+export const TAGS_DE_STATUS: { valor: CorTag; rotulo: string }[] = [
+    { valor: "green", rotulo: "Verde — tudo em dia" },
+    { valor: "blue", rotulo: "Azul — em andamento" },
+    { valor: "yellow", rotulo: "Amarelo — atenção" },
+    { valor: "purple", rotulo: "Roxo — destaque" },
+    { valor: "red", rotulo: "Vermelho — crítico" },
+    { valor: "gray", rotulo: "Cinza — neutro" },
+];
+
+/** Empresa e sócio chegam juntos: uma empresa sem sócio não é registro completo. */
+export interface DadosDeEmpresa {
+    nome: string;
+    setor: string;
+    status: string;
+    statusTag: string;
+    socio: {
+        nome: string;
+        cargo: string;
+        email: string;
+        telefone: string;
+        participacao: string;
+        desde: string;
+    };
+}
+
 export function carregarEmpresas(): Promise<Empresa[]> {
     return obterColecao<Empresa>("/empresas");
 }
 
 export function carregarEmpresa(id: string): Promise<DetalheEmpresa> {
     return obter<DetalheEmpresa>(`/empresas/${encodeURIComponent(id)}`);
+}
+
+export async function cadastrarEmpresa(dados: DadosDeEmpresa): Promise<Empresa> {
+    const resposta = await enviar<{ data: Empresa }>("/empresas", dados);
+    return resposta.data;
+}
+
+export async function salvarEmpresa(id: string, dados: DadosDeEmpresa): Promise<Empresa> {
+    const resposta = await atualizar<{ data: Empresa }>(
+        `/empresas/${encodeURIComponent(id)}`,
+        dados,
+    );
+    return resposta.data;
+}
+
+export function excluirEmpresa(id: string): Promise<void> {
+    return remover(`/empresas/${encodeURIComponent(id)}`);
 }
 
 export function carregarCarteira(): Promise<LinhaCarteira[]> {

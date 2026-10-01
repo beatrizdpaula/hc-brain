@@ -18,9 +18,6 @@ use App\Models\User;
  */
 final class Contadores
 {
-    /** Data de referência do protótipo, usada nos cálculos financeiros. */
-    public const HOJE = '2026-09-08';
-
     /**
      * Os três números do menu lateral. Ficam separados dos demais porque são
      * carregados em toda página — o Início pede o resto quando precisa.

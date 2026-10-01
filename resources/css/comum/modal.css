@@ -128,6 +128,53 @@
     border-top: 1px solid var(--border);
 }
 
+/* --------------------------------------------------------------------------
+   FORMULÁRIO DENTRO DO MODAL
+   Cadastrar e editar acontecem aqui: duas colunas enquanto couber, e cada
+   campo com espaço reservado para a mensagem que o servidor devolver.
+   -------------------------------------------------------------------------- */
+.form-campos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--esp-4);
+    margin-top: var(--esp-5);
+}
+
+.campo-largo {
+    grid-column: 1 / -1;
+}
+
+.campo-dica,
+.campo-erro {
+    display: block;
+    margin-top: var(--esp-2);
+    font-size: var(--texto-xs);
+    line-height: var(--altura-solta);
+}
+
+.campo-dica {
+    color: var(--texto-fraco);
+}
+
+.campo-erro {
+    color: var(--vermelho);
+}
+
+/* Excluir fica na ponta oposta de salvar: a distância evita o clique errado. */
+.modal-acao-perigosa {
+    margin-right: auto;
+}
+
+.modal-erro {
+    padding: var(--esp-3);
+    margin-top: var(--esp-4);
+    border: 1px solid var(--vermelho-fundo);
+    border-radius: var(--raio-sm);
+    background: var(--vermelho-fundo);
+    color: var(--vermelho);
+    font-size: var(--texto-base);
+}
+
 @keyframes modal-fundo {
     from {
         opacity: 0;

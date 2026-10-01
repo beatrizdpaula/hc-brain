@@ -24,11 +24,11 @@ class EmpresaFinanceiro extends Model
         return $this->belongsTo(Empresa::class);
     }
 
-    /** Meses completos de relacionamento até a data de referência do sistema. */
-    public function mesesDeVida(string $referencia): int
+    /** Meses completos de relacionamento até hoje. */
+    public function mesesDeVida(): int
     {
         $inicio = $this->desde;
-        $agora = \Illuminate\Support\Carbon::parse($referencia);
+        $agora = today();
 
         $meses = ($agora->year - $inicio->year) * 12 + ($agora->month - $inicio->month);
         if ($agora->day < $inicio->day) {

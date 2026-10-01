@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Empresa;
-use App\Support\Contadores;
 use Illuminate\Http\JsonResponse;
 
 class FinanceiroController extends Controller
@@ -23,7 +22,7 @@ class FinanceiroController extends Controller
                 'socio' => $empresa->socio->nome,
                 'regime' => $empresa->financeiro->regime,
                 'desde' => $empresa->financeiro->desde->format('Y-m-d'),
-                'meses' => $empresa->financeiro->mesesDeVida(Contadores::HOJE),
+                'meses' => $empresa->financeiro->mesesDeVida(),
                 'primeiro' => $empresa->financeiro->primeiro,
                 'atual' => $empresa->financeiro->atual,
                 'total' => $empresa->financeiro->total,

@@ -116,12 +116,9 @@ const ESTADO_PADRAO: Estado = {
         tipo: "Tudo",
         area: "Todas",
         periodo: "Qualquer período",
-        recentes: [
-            { termo: "Última reunião com Empresa X", contexto: "Reuniões" },
-            { termo: "Clientes interessados em automação", contexto: "Pessoas" },
-            { termo: "Propostas comerciais enviadas", contexto: "Documentos" },
-            { termo: "Reuniões de abertura", contexto: "Reuniões" },
-        ],
+        // As buscas recentes são as de quem está usando: a lista nasce vazia
+        // e cresce a cada pesquisa feita, aqui ou no Início.
+        recentes: [],
     },
     documentos: {
         busca: "",
@@ -141,7 +138,8 @@ const ESTADO_PADRAO: Estado = {
     usuarios: { busca: "", perfil: "Todos", status: "Todos" },
     treinamentos: { busca: "", tipo: "Todos", nivel: "Todos" },
     financeiro: { busca: "", regime: "Todos" },
-    comercial: { periodo: "2026-09" },
+    // Em branco, a tela de Comercial abre no mês mais recente que a base tem.
+    comercial: { periodo: "" },
     sofia: { modo: "search", conversaAtiva: null, conversas: [] },
 };
 

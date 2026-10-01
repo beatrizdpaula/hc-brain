@@ -52,6 +52,10 @@
               <dd id="detailUltimaReuniao">—</dd>
             </div>
           </dl>
+
+          <div class="empresa-header-actions">
+            <button class="secondary" id="editarEmpresa" type="button">Editar empresa</button>
+          </div>
         </div>
 
         <div class="empresa-relacionamento-financeiro">

@@ -69,18 +69,9 @@
     white-space: nowrap;
 }
 
-/* --------------------------------------------------------------------------
-   MODAL DE CADASTRO
-   -------------------------------------------------------------------------- */
-.usuario-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--esp-4);
-    margin-top: var(--esp-5);
-}
-
-@media (max-width: 550px) {
-    .usuario-form-grid {
-        grid-template-columns: 1fr;
-    }
+/* A coluna de ações encosta na direita e não disputa espaço com os dados. */
+.usuario-acoes {
+    width: 1%;
+    text-align: right;
+    white-space: nowrap;
 }

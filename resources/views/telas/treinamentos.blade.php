@@ -16,6 +16,10 @@
           HC: cursos, trilhas, manuais e fluxogramas.
         </p>
       </div>
+
+      <div class="page-header-actions">
+        <button class="primary" id="novoTreinamento" type="button">Novo conteúdo</button>
+      </div>
     </div>
 
     <div class="training-banner">

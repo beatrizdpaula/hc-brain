@@ -83,8 +83,10 @@ class ApiTest extends TestCase
         $this->autenticado()
             ->getJson('/api/documentos')
             ->assertOk()
-            ->assertJsonCount(8, 'documentos')
-            ->assertJsonCount(6, 'pastas');
+            ->assertJsonCount(5, 'documentos')
+            ->assertJsonCount(5, 'pastas')
+            // A contagem de cada pasta é contada, não guardada em coluna.
+            ->assertJsonPath('pastas.0.total', 3);
     }
 
     public function test_treinamentos_vem_com_o_historico(): void
@@ -129,7 +131,7 @@ class ApiTest extends TestCase
                     'empresas' => 5,
                     'reunioes' => 10,
                     'usuarios' => 7,
-                    'documentos' => 8,
+                    'documentos' => 5,
                     'treinamentos' => 19,
                     'projetos' => 6,
                     'processos' => 6,

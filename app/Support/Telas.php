@@ -33,6 +33,9 @@ final class Telas
     /** Telas que existem sem entrada no menu. */
     public const AUXILIARES = [
         ['id' => 'login', 'titulo' => 'Entrar', 'rota' => '/login'],
+        // As duas telas de senha compartilham esta folha e este script; a de
+        // nova senha só é alcançada pelo link do e-mail, com o token na URL.
+        ['id' => 'senha', 'titulo' => 'Recuperar acesso', 'rota' => '/esqueci-a-senha'],
         // O detalhe de um cliente mantém "Empresas & clientes" ativo no menu.
         ['id' => 'cliente', 'titulo' => 'Detalhe do cliente', 'rota' => '/clientes/{id}', 'menu' => 'clientes'],
     ];

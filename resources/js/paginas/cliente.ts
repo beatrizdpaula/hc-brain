@@ -18,6 +18,7 @@ import { aparenciaPorTipo, type ConteudoTreinamento } from "../dados/treinamento
 import { dado, porId, porSeletor, talvez, todos } from "../comum/dom.ts";
 import { atualizarSecao } from "../comum/estado.ts";
 import { duracaoEmMeses, escapar, iniciais, moeda } from "../comum/formato.ts";
+import { abrirFormularioDeEmpresa } from "../comum/formulario-empresa.ts";
 import { desenharIcones, icone } from "../comum/icones.ts";
 import { openMeetingModal, showModal } from "../comum/modal.ts";
 import { caminhoDaPagina } from "../comum/paginas.ts";
@@ -45,6 +46,19 @@ if (detalhe) {
     porId("verTodasReunioesEmpresa").addEventListener("click", () => {
         atualizarSecao("reunioes", { empresa: empresa.nome });
         window.location.href = caminhoDaPagina("reunioes");
+    });
+
+    porId("editarEmpresa").addEventListener("click", () => {
+        void abrirFormularioDeEmpresa(empresa, {
+            // A página inteira é montada a partir da empresa, do cabeçalho ao
+            // financeiro: recarregar é mais honesto do que redesenhar pedaços.
+            aoSalvar() {
+                window.location.reload();
+            },
+            aoExcluir() {
+                window.location.href = caminhoDaPagina("clientes");
+            },
+        });
     });
 }
 
@@ -87,7 +101,7 @@ function renderFontes(empresa: Empresa): void {
         ? empresa.fontes
               .map(
                   (fonte) => `
-            <button type="button" class="fonte-item" data-fonte="${escapar(fonte.nome)}">
+            <button type="button" class="fonte-item" data-fonte="${escapar(fonte.nome)}" data-fonte-info="${escapar(`${fonte.tipo} · ${fonte.info}`)}">
               <span class="fonte-icon">${escapar(fonte.tipo)}</span>
               <span class="fonte-texto">
                 <strong>${escapar(fonte.nome)}</strong>
@@ -99,11 +113,13 @@ function renderFontes(empresa: Empresa): void {
               .join("")
         : `<div class="empty-state">Nenhuma fonte vinculada diretamente a esta empresa.</div>`;
 
+    // A fonte é a referência que a HC guarda do material da empresa, não o
+    // arquivo em si — quem guarda arquivo é a tela de Documentos.
     todos("[data-fonte]", fontes).forEach((item) => {
         item.addEventListener("click", () => {
             showModal(
                 dado(item, "fonte"),
-                `Esta fonte está vinculada diretamente à empresa ${empresa.nome} e será aberta do banco de documentos na versão final.`,
+                `${dado(item, "fonteInfo")} — referência vinculada à empresa ${empresa.nome}.`,
             );
         });
     });

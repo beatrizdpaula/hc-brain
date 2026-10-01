@@ -13,6 +13,7 @@ class UsuarioResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'nome' => $this->name,
             'email' => $this->email,
             'perfil' => $this->perfil,
@@ -26,10 +27,6 @@ class UsuarioResource extends JsonResource
     /**
      * "Hoje, 10:42" em vez de uma data crua: é assim que se lê um último
      * acesso. O banco guarda o instante; o texto é montado aqui.
-     *
-     * A comparação é com o dia de hoje de verdade, não com a data de
-     * referência do protótipo — senão "Hoje" apareceria em um acesso de
-     * semanas atrás.
      */
     private static function quando(?Carbon $momento): string
     {

@@ -4,11 +4,11 @@
 
 import { obter } from "../comum/api.ts";
 
-export const PERIODOS_COMERCIAIS = ["2026-09", "2026-08", "2026-07"] as const;
-
-export type PeriodoComercialId = (typeof PERIODOS_COMERCIAIS)[number];
-
-export const PERIODO_COMERCIAL_PADRAO: PeriodoComercialId = "2026-09";
+/** Um mês fechado na base, como o filtro da tela precisa dele. */
+export interface PeriodoComercial {
+    id: string;
+    rotulo: string;
+}
 
 export type MesLeads = [rotulo: string, leads: number];
 export type OrigemLead = [nome: string, leads: number, cor: string];
@@ -25,6 +25,8 @@ export type LinhaEquipe = [
 export interface IndicadoresComerciais {
     periodo: string;
     leads: number;
+    /** Nulo no mês mais antigo da base: não há com o que comparar. */
+    leadsAnteriores: number | null;
     qualified: number;
     meetings: number;
     proposals: number;
@@ -39,12 +41,12 @@ export interface IndicadoresComerciais {
     team: LinhaEquipe[];
 }
 
-/** O período vem de um `<select>`, então precisa ser conferido antes do acesso. */
-export function ehPeriodoComercial(valor: string): valor is PeriodoComercialId {
-    return (PERIODOS_COMERCIAIS as readonly string[]).includes(valor);
+export function carregarPeriodosComerciais(): Promise<PeriodoComercial[]> {
+    return obter<PeriodoComercial[]>("/comercial");
 }
 
 export function carregarComercial(periodo: string): Promise<IndicadoresComerciais> {
-    const escolhido = ehPeriodoComercial(periodo) ? periodo : PERIODO_COMERCIAL_PADRAO;
-    return obter<IndicadoresComerciais>(`/comercial/${escolhido}`);
+    return obter<IndicadoresComerciais>(
+        `/comercial/${encodeURIComponent(periodo || "atual")}`,
+    );
 }

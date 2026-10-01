@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\RedefinirSenha;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -19,6 +20,12 @@ class User extends Authenticatable
 {
     use Notifiable;
 
+    public const PERFIS = ['Administrador', 'Gestor', 'Colaborador'];
+
+    public const AREAS = ['Gestão', 'Comercial', 'Operações', 'Atendimento', 'Financeiro', 'Projetos'];
+
+    public const STATUS = ['Ativo', 'Inativo'];
+
     protected function casts(): array
     {
         return [
@@ -26,6 +33,12 @@ class User extends Authenticatable
             'ultimo_acesso' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /** O e-mail de recuperação sai em português e com a marca do HC Brain. */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new RedefinirSenha($token));
     }
 
     /**

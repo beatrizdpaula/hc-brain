@@ -79,6 +79,9 @@
 .commercial-delta.up {
     color: #42d0a0;
 }
+.commercial-delta.down {
+    color: var(--vermelho);
+}
 .commercial-delta.neutral {
     color: #8d9db2;
 }

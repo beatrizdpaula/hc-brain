@@ -6,14 +6,20 @@
 
 import {
     aparenciaPorTipo,
+    cadastrarTreinamento,
     carregarTreinamentos,
+    excluirTreinamento,
+    NIVEIS_DE_TREINAMENTO,
+    salvarTreinamento,
+    TIPOS_DE_TREINAMENTO,
     type ConteudoTreinamento,
+    type DadosDeTreinamento,
 } from "../dados/treinamentos.ts";
 import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import { atualizarSecao, observarEstado, obterSecao } from "../comum/estado.ts";
 import { escapar, plural } from "../comum/formato.ts";
+import { abrirFormulario } from "../comum/formulario.ts";
 import { desenharIcones, icone } from "../comum/icones.ts";
-import { showModal } from "../comum/modal.ts";
 import { iniciarPagina } from "../comum/shell.ts";
 
 iniciarPagina("treinamentos");
@@ -23,7 +29,101 @@ const busca = campo("trainingSearch");
 const tipo = selecao("trainingTypeFilter");
 const nivel = selecao("trainingLevelFilter");
 
-const { conteudos: treinamentoData, historico } = await carregarTreinamentos();
+let { conteudos: treinamentoData, historico } = await carregarTreinamentos();
+
+async function abrirFormularioDe(item?: ConteudoTreinamento): Promise<void> {
+    const salvou = await abrirFormulario({
+        titulo: item ? "Editar conteúdo" : "Novo conteúdo",
+        campos: [
+            {
+                nome: "titulo",
+                rotulo: "Título",
+                valor: item?.titulo,
+                obrigatorio: true,
+                largo: true,
+            },
+            {
+                nome: "descricao",
+                rotulo: "Descrição",
+                tipo: "longo",
+                valor: item?.descricao,
+                obrigatorio: true,
+                largo: true,
+            },
+            {
+                nome: "tipo",
+                rotulo: "Tipo",
+                tipo: "selecao",
+                valor: item?.tipo ?? "Curso",
+                opcoes: TIPOS_DE_TREINAMENTO.map((tipo) => ({
+                    valor: tipo,
+                    rotulo: tipo,
+                })),
+            },
+            {
+                nome: "nivel",
+                rotulo: "Nível",
+                tipo: "selecao",
+                valor: item?.nivel ?? "Todos",
+                opcoes: NIVEIS_DE_TREINAMENTO.map((nivel) => ({
+                    valor: nivel,
+                    rotulo: nivel === "Todos" ? "Todos os níveis" : nivel,
+                })),
+            },
+            {
+                nome: "categoria",
+                rotulo: "Categoria",
+                valor: item?.categoria,
+                obrigatorio: true,
+            },
+            {
+                nome: "cursos",
+                rotulo: "Cursos",
+                valor: item?.cursos ?? "",
+                dica: "Só para trilhas: \u201c6 cursos\u201d.",
+            },
+            {
+                nome: "trilha",
+                rotulo: "Trilha",
+                valor: item?.trilha ?? "",
+                dica: "A trilha de que este conteúdo faz parte, se houver.",
+            },
+            {
+                nome: "processo",
+                rotulo: "Processo relacionado",
+                valor: item?.processo ?? "",
+            },
+        ],
+        excluir: item
+            ? {
+                  confirmacao: `Excluir "${item.titulo}" da base de treinamentos? Essa ação não pode ser desfeita.`,
+                  aoExcluir: () => excluirTreinamento(item.id),
+              }
+            : undefined,
+        async aoSalvar(valores) {
+            const dados: DadosDeTreinamento = {
+                titulo: valores.texto("titulo"),
+                tipo: valores.texto("tipo"),
+                categoria: valores.texto("categoria"),
+                nivel: valores.texto("nivel"),
+                descricao: valores.texto("descricao"),
+                trilha: valores.texto("trilha") || null,
+                cursos: valores.texto("cursos") || null,
+                processo: valores.texto("processo") || null,
+            };
+
+            await (item
+                ? salvarTreinamento(item.id, dados)
+                : cadastrarTreinamento(dados));
+        },
+    });
+
+    if (salvou) {
+        ({ conteudos: treinamentoData, historico } = await carregarTreinamentos());
+        renderConteudos();
+        renderHistorico();
+    }
+}
 
 function conteudosFiltrados(): ConteudoTreinamento[] {
     const estado = obterSecao("treinamentos");
@@ -76,20 +176,7 @@ function renderConteudos(): void {
             const item = treinamentoData.find(
                 (registro) => registro.id === dado(card, "trainingId"),
             );
-            if (!item) return;
-            showModal(
-                item.titulo,
-                [
-                    item.descricao,
-                    "",
-                    `Categoria: ${item.categoria}`,
-                    item.nivel !== "Todos" ? `Nível: ${item.nivel}` : null,
-                    item.processo ? `Processo relacionado: ${item.processo}` : null,
-                    item.trilha ? `Trilha: ${item.trilha}` : null,
-                ]
-                    .filter((linha) => linha !== null)
-                    .join("\n"),
-            );
+            if (item) void abrirFormularioDe(item);
         });
     });
 
@@ -144,6 +231,8 @@ nivel.addEventListener("change", () =>
 porId("clearTrainingFilters").addEventListener("click", () => {
     atualizarSecao("treinamentos", { busca: "", tipo: "Todos", nivel: "Todos" });
 });
+
+porId("novoTreinamento").addEventListener("click", () => void abrirFormularioDe());
 
 observarEstado(["treinamentos"], renderConteudos);
 

@@ -17,6 +17,9 @@ class Empresa extends Model
 {
     protected $table = 'empresas';
 
+    /** Cores de etiqueta que a interface sabe desenhar. */
+    public const TAGS = ['green', 'blue', 'yellow', 'purple', 'gray', 'red'];
+
     public $incrementing = false;
 
     protected $keyType = 'string';

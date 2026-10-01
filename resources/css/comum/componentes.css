@@ -354,6 +354,7 @@ a.card {
    -------------------------------------------------------------------------- */
 .primary,
 .secondary,
+.perigo,
 .ghost,
 .document-button,
 .research-help,
@@ -374,6 +375,7 @@ a.card {
 
 .primary svg,
 .secondary svg,
+.perigo svg,
 .ghost svg,
 .document-button svg,
 .research-help svg,
@@ -392,6 +394,27 @@ a.card {
     border-color: var(--roxo-claro);
     background: var(--roxo-claro);
     color: #10131c;
+}
+
+/* Enquanto o servidor responde, o botão fica inerte em vez de aceitar um
+   segundo clique que criaria o registro duas vezes. */
+.primary:disabled,
+.secondary:disabled,
+.perigo:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* Ação sem volta: excluir um registro. A cor avisa antes do clique. */
+.perigo {
+    border-color: var(--vermelho);
+    background: var(--vermelho-fundo);
+    color: var(--vermelho);
+}
+
+.perigo:hover {
+    background: var(--vermelho);
+    color: #fff;
 }
 
 .secondary,

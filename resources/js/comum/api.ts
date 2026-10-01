@@ -69,14 +69,41 @@ export function obter<T>(caminho: string): Promise<T> {
     return pedir<T>(caminho);
 }
 
-export function enviar<T>(caminho: string, corpo: unknown): Promise<T> {
+function comCorpo<T>(metodo: string, caminho: string, corpo: unknown): Promise<T> {
     return pedir<T>(caminho, {
-        method: "POST",
+        method: metodo,
         headers: {
             "Content-Type": "application/json",
             "X-CSRF-TOKEN": tokenCsrf(),
         },
         body: JSON.stringify(corpo),
+    });
+}
+
+export function enviar<T>(caminho: string, corpo: unknown): Promise<T> {
+    return comCorpo<T>("POST", caminho, corpo);
+}
+
+export function atualizar<T>(caminho: string, corpo: unknown): Promise<T> {
+    return comCorpo<T>("PUT", caminho, corpo);
+}
+
+export async function remover(caminho: string): Promise<void> {
+    await pedir<null>(caminho, {
+        method: "DELETE",
+        headers: { "X-CSRF-TOKEN": tokenCsrf() },
+    });
+}
+
+/**
+ * Envio de arquivo vai como FormData: o navegador monta o `multipart` e
+ * escolhe o boundary, então aqui não se define Content-Type na mão.
+ */
+export function enviarArquivo<T>(caminho: string, dados: FormData): Promise<T> {
+    return pedir<T>(caminho, {
+        method: "POST",
+        headers: { "X-CSRF-TOKEN": tokenCsrf() },
+        body: dados,
     });
 }
 

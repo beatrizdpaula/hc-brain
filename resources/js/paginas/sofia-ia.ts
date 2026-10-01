@@ -386,7 +386,7 @@ modoBase.addEventListener("click", () => atualizarSecao("sofia", { modo: "base" 
 porId("sofiaModelBtn").addEventListener("click", () => {
     showModal(
         "Modelo da Sofia",
-        "Sofia é o assistente de IA da HC. Nesta versão do protótipo, o modelo é demonstrativo.",
+        "A Sofia responde a partir da base da HC: empresas, sócios, reuniões, documentos, treinamentos, projetos e processos. Ela não consulta nada fora daqui.",
     );
 });
 

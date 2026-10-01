@@ -52,6 +52,7 @@ const MARKUP = `
       </div>
 
       <div class="modal-actions">
+        <button class="secondary" id="meetingModalEditar" hidden>Editar reunião</button>
         <button class="primary" id="meetingModalOk">Fechar</button>
       </div>
     </div>
@@ -124,8 +125,7 @@ export function showModal(title: string, text?: string): void {
     const { generico } = garantirModais();
     porId("modalTitle").textContent = title;
     porId("modalText").textContent =
-        text ||
-        "Esta informação será carregada do banco de dados real da HC na versão final.";
+        text || "Não há detalhe registrado para este item na base.";
     abrir(generico);
 }
 
@@ -133,8 +133,19 @@ export function closeModal(): void {
     fechar(modais?.generico);
 }
 
-export function openMeetingModal(meeting: Reuniao): void {
+/**
+ * O detalhe de uma reunião. `aoEditar` só é passado pela tela de Reuniões —
+ * no detalhe do cliente a reunião é leitura, e o botão nem aparece.
+ */
+export function openMeetingModal(meeting: Reuniao, aoEditar?: () => void): void {
     const { reuniao } = garantirModais();
+
+    const editar = porId<HTMLButtonElement>("meetingModalEditar");
+    editar.hidden = aoEditar === undefined;
+    editar.onclick = () => {
+        closeMeetingModal();
+        aoEditar?.();
+    };
 
     porId("meetingModalEmpresa").textContent = `Reunião • ${meeting.empresa}`;
     porId("meetingModalTitle").textContent = `Reunião de ${meeting.tipo}`;

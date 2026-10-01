@@ -6,16 +6,22 @@
    ========================================================= */
 
 import {
+    cadastrarProjeto,
     carregarProjetos,
+    excluirProjeto,
+    PRIORIDADES_DE_PROJETO,
+    salvarProjeto,
+    STATUS_DE_PROJETO,
     tagDaPrioridade,
     tagDoStatusDeProjeto,
+    type DadosDeProjeto,
     type Projeto,
 } from "../dados/projetos.ts";
-import type { CorTag } from "../dados/empresas.ts";
+import { carregarEmpresas, type CorTag } from "../dados/empresas.ts";
 import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
-import { escapar, plural } from "../comum/formato.ts";
+import { dataCurta, escapar, plural } from "../comum/formato.ts";
+import { abrirFormulario } from "../comum/formulario.ts";
 import { desenharIcones, icone } from "../comum/icones.ts";
-import { showModal } from "../comum/modal.ts";
 import { iniciarPagina } from "../comum/shell.ts";
 
 iniciarPagina("projetos");
@@ -25,15 +31,25 @@ const busca = campo("projetoSearch");
 const statusFiltro = selecao("projetoStatusFilter");
 const areaFiltro = selecao("projetoAreaFilter");
 
-const projetos = await carregarProjetos();
+let projetos = await carregarProjetos();
+const empresas = await carregarEmpresas();
 
 // As áreas do filtro saem dos próprios projetos: uma área nova na base
 // aparece aqui sem ninguém editar a lista.
-for (const area of [...new Set(projetos.map((projeto) => projeto.area))].sort()) {
-    const opcao = document.createElement("option");
-    opcao.value = area;
-    opcao.textContent = area;
-    areaFiltro.appendChild(opcao);
+function preencherAreas(): void {
+    const escolhida = areaFiltro.value;
+    const areas = [...new Set(projetos.map((projeto) => projeto.area))].sort();
+
+    areaFiltro.innerHTML = [
+        `<option value="Todas">Todas as áreas</option>`,
+        ...areas.map(
+            (area) => `<option value="${escapar(area)}">${escapar(area)}</option>`,
+        ),
+    ].join("");
+
+    // Editar um projeto pode apagar a última área de um nome; se a que estava
+    // filtrada sumiu, o filtro volta para "Todas" em vez de esconder tudo.
+    areaFiltro.value = areas.includes(escolhida) ? escolhida : "Todas";
 }
 
 /** Como o prazo é lido: atrasado, apertado ou tranquilo. */
@@ -44,7 +60,136 @@ function prazo(projeto: Projeto): { texto: string; cor: CorTag } {
     if (projeto.diasRestantes <= 30) {
         return { texto: `Faltam ${projeto.diasRestantes} dias`, cor: "yellow" };
     }
-    return { texto: `Entrega em ${projeto.prazo}`, cor: "gray" };
+    return { texto: `Entrega em ${dataCurta(projeto.prazo)}`, cor: "gray" };
+}
+
+function dadosDoFormulario(valores: {
+    texto(nome: string): string;
+    numero(nome: string): number;
+}): DadosDeProjeto {
+    return {
+        nome: valores.texto("nome"),
+        descricao: valores.texto("descricao"),
+        status: valores.texto("status"),
+        prioridade: valores.texto("prioridade"),
+        responsavel: valores.texto("responsavel"),
+        area: valores.texto("area"),
+        progresso: valores.numero("progresso"),
+        inicio: valores.texto("inicio"),
+        prazo: valores.texto("prazo"),
+        empresaId: valores.texto("empresaId") || null,
+    };
+}
+
+async function abrirFormularioDe(projeto?: Projeto): Promise<void> {
+    const salvou = await abrirFormulario({
+        titulo: projeto ? "Editar projeto" : "Novo projeto",
+        campos: [
+            {
+                nome: "nome",
+                rotulo: "Nome",
+                valor: projeto?.nome,
+                obrigatorio: true,
+                largo: true,
+            },
+            {
+                nome: "descricao",
+                rotulo: "Descrição",
+                tipo: "longo",
+                valor: projeto?.descricao,
+                obrigatorio: true,
+                largo: true,
+            },
+            {
+                nome: "status",
+                rotulo: "Status",
+                tipo: "selecao",
+                valor: projeto?.status ?? "Planejado",
+                opcoes: STATUS_DE_PROJETO.map((status) => ({
+                    valor: status,
+                    rotulo: status,
+                })),
+            },
+            {
+                nome: "prioridade",
+                rotulo: "Prioridade",
+                tipo: "selecao",
+                valor: projeto?.prioridade ?? "Média",
+                opcoes: PRIORIDADES_DE_PROJETO.map((prioridade) => ({
+                    valor: prioridade,
+                    rotulo: prioridade,
+                })),
+            },
+            {
+                nome: "responsavel",
+                rotulo: "Responsável",
+                valor: projeto?.responsavel,
+                obrigatorio: true,
+            },
+            {
+                nome: "area",
+                rotulo: "Área",
+                valor: projeto?.area,
+                obrigatorio: true,
+                dica: "Uma área nova passa a aparecer no filtro.",
+            },
+            {
+                nome: "inicio",
+                rotulo: "Início",
+                tipo: "data",
+                valor: projeto?.inicio,
+                obrigatorio: true,
+            },
+            {
+                nome: "prazo",
+                rotulo: "Prazo de entrega",
+                tipo: "data",
+                valor: projeto?.prazo,
+                obrigatorio: true,
+            },
+            {
+                nome: "progresso",
+                rotulo: "Progresso (%)",
+                tipo: "numero",
+                valor: String(projeto?.progresso ?? 0),
+                min: "0",
+                max: "100",
+                obrigatorio: true,
+            },
+            {
+                nome: "empresaId",
+                rotulo: "Cliente",
+                tipo: "selecao",
+                valor: projeto?.empresaId ?? "",
+                opcoes: [
+                    { valor: "", rotulo: "Projeto interno" },
+                    ...empresas.map((empresa) => ({
+                        valor: empresa.id,
+                        rotulo: empresa.nome,
+                    })),
+                ],
+            },
+        ],
+        excluir: projeto
+            ? {
+                  confirmacao: `Excluir "${projeto.nome}" da carteira? Essa ação não pode ser desfeita.`,
+                  aoExcluir: () => excluirProjeto(projeto.id),
+              }
+            : undefined,
+        async aoSalvar(valores) {
+            const dados = dadosDoFormulario(valores);
+            await (projeto ? salvarProjeto(projeto.id, dados) : cadastrarProjeto(dados));
+        },
+    });
+
+    if (salvou) await recarregar();
+}
+
+async function recarregar(): Promise<void> {
+    projetos = await carregarProjetos();
+    preencherAreas();
+    renderKpis();
+    renderProjetos();
 }
 
 function projetosFiltrados(): Projeto[] {
@@ -141,25 +286,14 @@ function renderProjetos(): void {
               .join("")
         : `<div class="empty-state">Nenhum projeto encontrado com os filtros atuais.</div>`;
 
+    // O cartão já mostra tudo que havia no detalhe, então clicar nele abre
+    // direto a edição — é o que se quer fazer depois de olhar um projeto.
     todos("[data-projeto-id]", grid).forEach((card) => {
         card.addEventListener("click", () => {
             const projeto = projetos.find(
                 (registro) => registro.id === dado(card, "projetoId"),
             );
-            if (!projeto) return;
-
-            showModal(
-                projeto.nome,
-                [
-                    projeto.descricao,
-                    "",
-                    `Status: ${projeto.status} · prioridade ${projeto.prioridade}`,
-                    `Responsável: ${projeto.responsavel} (${projeto.area})`,
-                    `Cliente: ${projeto.empresa ?? "projeto interno"}`,
-                    `Período: ${projeto.inicio} até ${projeto.prazo}`,
-                    `Progresso: ${projeto.progresso}%`,
-                ].join("\n"),
-            );
+            if (projeto) void abrirFormularioDe(projeto);
         });
     });
 
@@ -177,5 +311,8 @@ porId("clearProjetoFilters").addEventListener("click", () => {
     renderProjetos();
 });
 
+porId("novoProjeto").addEventListener("click", () => void abrirFormularioDe());
+
+preencherAreas();
 renderKpis();
 renderProjetos();

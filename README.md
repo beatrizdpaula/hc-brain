@@ -1,8 +1,8 @@
 # HC Brain — Laravel + telas em TypeScript
 
-O "cérebro da empresa" da Health Care. O que antes era um protótipo estático virou uma
-aplicação Laravel de verdade: os dados estão no banco, o login é sessão do Laravel e cada
-tela tem a sua URL. **As telas continuam em TypeScript** — o Blade entrega só o esqueleto da
+O "cérebro da empresa" da Health Care. É uma aplicação Laravel de verdade: os dados estão no
+banco, o login é sessão do Laravel, cada tela tem a sua URL e o que se cadastra, edita ou
+exclui na tela é gravado. **As telas são em TypeScript** — o Blade entrega só o esqueleto da
 página, e o script daquela tela busca os dados na API e preenche o conteúdo.
 
 A divisão é essa:
@@ -27,15 +27,17 @@ php artisan serve
 ```
 
 O banco é SQLite (`database/database.sqlite`) e `migrate --seed` já popula tudo. A primeira
-tela é o login:
+tela é o login, e a senha da equipe semeada é a que estiver em `HC_SENHA_SEMEADA` no `.env`
+— não há senha escrita no repositório. Sem essa variável, o seeder cria cada pessoa com uma
+senha aleatória e avisa no terminal: é assim que precisa ficar em produção, para que semear a
+base não produza credencial conhecida por quem leu o código.
 
-| E-mail                    | Senha  |
-| ------------------------- | ------ |
-| beatriz@healthcare.com.br | 123456 |
-| matheus@healthcare.com.br | 123456 |
+Entre com qualquer e-mail da equipe (`beatriz@healthcare.com.br`, por exemplo) e essa senha.
+Se ela se perder, "Esqueci minha senha" envia o link de recuperação; em desenvolvimento
+`MAIL_MAILER=log` guarda o e-mail em `storage/logs/laravel.log`.
 
-Os outros cinco usuários da equipe aparecem na tela de Usuários, mas entram com senha
-aleatória — eles existem como registro, não como acesso demonstrativo.
+As decisões que mudam de um ambiente para o outro ficam em `config/hc.php`: a senha semeada,
+o disco onde os documentos enviados são guardados, o tamanho máximo e as extensões aceitas.
 
 Outros comandos: `npm run build` (confere os tipos e gera `public/build/`), `npm run
 typecheck` (só a conferência de tipos), `npm run format` (Prettier no CSS e no TypeScript) e
@@ -46,6 +48,8 @@ typecheck` (só a conferência de tipos), `npm run format` (Prettier no CSS e no
 | Tela                | Rota               | View Blade          | Estilo                  | Script                        |
 | ------------------- | ------------------ | ------------------- | ----------------------- | ----------------------------- |
 | Login               | `/login`           | `telas/login`       | `css/login.css`         | `js/paginas/login.ts`         |
+| Recuperar acesso    | `/esqueci-a-senha` | `telas/senha`       | `css/senha.css`         | `js/paginas/senha.ts`         |
+| Nova senha          | `/redefinir-senha/{token}` | `telas/nova-senha` | `css/senha.css`  | `js/paginas/senha.ts`         |
 | Início              | `/`                | `telas/inicio`      | `css/inicio.css`        | `js/paginas/inicio.ts`        |
 | Pesquisa            | `/pesquisa`        | `telas/pesquisa`    | `css/pesquisa.css`      | `js/paginas/pesquisa.ts`      |
 | Documentos          | `/documentos`      | `telas/documentos`  | `css/documentos.css`    | `js/paginas/documentos.ts`    |
@@ -121,8 +125,14 @@ projetos, processos                 resultados_pesquisa, sugestoes_sofia, users
 ```
 
 Os seeders em `database/seeders/` trazem a base da HC: 5 empresas com sócio, fontes e
-financeiro, 10 reuniões, 8 documentos em 6 pastas, 19 conteúdos de capacitação, 6 projetos, 6
+financeiro, 10 reuniões, 5 documentos em 5 pastas, 19 conteúdos de capacitação, 6 projetos, 6
 processos, 3 períodos comerciais, 16 resultados de pesquisa e a equipe de 7 pessoas.
+
+Documento é arquivo de verdade: `documentos` guarda a pasta, o tamanho, o mime e o caminho
+dentro do disco configurado, e o `DocumentoSeeder` grava os arquivos nesse disco, então
+baixar, renomear e excluir se comportam em desenvolvimento como vão se comportar no ar. O
+download passa pelo Laravel, e não por URL pública do disco, porque documento da HC não deve
+ficar acessível a quem não está na sessão.
 
 Nada que é aparência mora no banco. O ícone de um treinamento sai do tipo dele
 (`dados/treinamentos.ts`), não de uma coluna; o último acesso de um usuário é um `timestamp`,
@@ -140,17 +150,27 @@ ali, e não em `routes/api.php`, justamente para compartilharem a sessão e o CS
 | `GET /api/empresas/{id}`  | o detalhe do cliente inteiro, em uma resposta só    |
 | `GET /api/reunioes`       | reuniões e as empresas para o filtro                |
 | `GET /api/documentos`     | pastas e documentos                                 |
+| `GET /api/documentos/{id}/arquivo` | o arquivo, servido dentro da sessão        |
 | `GET /api/treinamentos`   | conteúdos e histórico                               |
 | `GET /api/projetos`       | a carteira de projetos, com prazo e progresso       |
 | `GET /api/processos`      | os fluxos internos e suas etapas                    |
+| `GET /api/comercial`      | os meses fechados, para o filtro                    |
 | `GET /api/comercial/{periodo}` | os indicadores daquele mês                     |
 | `GET /api/financeiro`     | a carteira consolidada                              |
 | `GET /api/pesquisa`       | o índice de busca                                   |
-| `GET/POST /api/usuarios`  | listar e cadastrar a equipe                         |
+| `GET /api/usuarios`       | a equipe                                            |
 | `GET /api/sofia/sugestoes`, `POST /api/sofia/perguntar` | a Sofia          |
 
-`app/Http/Resources/` garante que uma empresa, uma reunião ou um usuário cheguem sempre com a
-mesma forma, independente de qual tela pediu.
+Cada entidade tem o seu lado de escrita: `POST`, `PUT` e `DELETE` em `/api/empresas`,
+`/api/reunioes`, `/api/projetos`, `/api/processos`, `/api/treinamentos`, `/api/usuarios`,
+`/api/pastas` e `/api/documentos` — este último recebe o arquivo em `multipart/form-data`.
+As rotas de escrita são declaradas uma a uma, e não por `apiResource`, porque o parâmetro é
+em português: o singular que o Laravel deduz de "reunioes" não é "reuniao".
+
+`app/Http/Requests/` valida o que chega e `app/Http/Resources/` garante que uma empresa, uma
+reunião ou um usuário cheguem sempre com a mesma forma, independente de qual tela pediu. Os
+erros de validação voltam como 422 e `resources/js/comum/formulario.ts` os coloca embaixo do
+campo que os causou, sem fechar a caixa.
 
 ## O que ainda vive no navegador
 
@@ -191,6 +211,14 @@ O login vai por POST com o token da sessão e é limitado a 10 tentativas por mi
 (`throttle:10,1`) — sem isso, a tela de entrada fica aberta a força bruta. A sessão é
 regenerada no login e invalidada no logout.
 
+A recuperação de senha é a do Laravel: um token de validade curta chega por e-mail e só ele
+autoriza a troca. O pedido é limitado a 5 por minuto e a resposta é sempre a mesma, exista ou
+não a conta, para que a tela não vire uma lista de quem tem acesso ao HC Brain.
+
+Na tela de Usuários, duas coisas não são permitidas, porque nenhuma delas tem volta pela
+interface: excluir o próprio acesso e remover ou rebaixar a última pessoa com perfil de
+Administrador ativo.
+
 Erros têm página própria e com a marca do HC Brain (`resources/views/errors/`): 403, 404, 419,
 429 e 500. Ninguém cai na tela crua do Laravel.
 
@@ -211,13 +239,16 @@ resources/views/errors/  as páginas de erro
 resources/css/<tela>.css o estilo de cada tela
 resources/css/comum/     base (tokens), layout, barra lateral, componentes e modal
 resources/js/paginas/    o script de cada tela
-resources/js/comum/      shell, ícones, mapa de telas, estado, API, modal, DOM e formatação
+resources/js/comum/      shell, ícones, mapa de telas, estado, API, modal, formulário, DOM e formatação
 resources/js/dados/      os tipos das entidades e as funções que chamam a API
 tests/Feature/           autenticação, telas e API
 ```
 
-`resources/js/comum/api.ts` concentra as chamadas: `obter` e `enviar` já mandam o CSRF, tratam
-erro de validação e devolvem para o login quando a sessão cai. `resources/js/comum/dom.ts`
+`resources/js/comum/api.ts` concentra as chamadas: `obter`, `enviar`, `atualizar`, `remover` e
+`enviarArquivo` já mandam o CSRF, tratam erro de validação e devolvem para o login quando a
+sessão cai. `resources/js/comum/formulario.ts` concentra o cadastrar-editar-excluir: uma só
+descrição de campos vira a caixa, o erro de cada campo e a confirmação de exclusão, então as
+telas não repetem esse comportamento cada uma do seu jeito. `resources/js/comum/dom.ts`
 concentra o acesso aos elementos: `porId`, `campo` e `selecao` devolvem o elemento já tipado e
 falham na hora se o id sair do Blade. `resources/js/comum/formato.ts` concentra como número,
 dinheiro e nome viram texto, então "R$ 8.700" tem a mesma cara em toda tela.
@@ -228,9 +259,11 @@ dinheiro e nome viram texto, então "R$ 8.700" tem a mesma cara em toda tela.
 php vendor/bin/phpunit
 ```
 
-`tests/Feature/` cobre o login e a sessão (incluindo o limite de tentativas), o acesso a cada
-tela do menu (com e sem sessão), o 404 do cliente inexistente e todos os endpoints da API,
-incluindo o cadastro de usuário e as respostas da Sofia. As telas do menu são percorridas a
-partir de `Telas::MENU`, então um item apontando para uma rota que não existe quebra o teste.
+`tests/Feature/` cobre o login e a sessão (incluindo o limite de tentativas e a recuperação
+de senha), o acesso a cada tela do menu (com e sem sessão), o 404 do cliente inexistente, a
+leitura de todos os endpoints e, em `EscritaTest`, o outro lado: cadastrar, editar e excluir
+cada entidade, o upload e o download de documento, e as regras que impedem a base de ficar
+incoerente. As telas do menu são percorridas a partir de `Telas::MENU`, então um item
+apontando para uma rota que não existe quebra o teste.
 
-Os dados são demonstrativos; não há integração externa.
+A base vem dos seeders e serve de ponto de partida; não há integração externa.

@@ -60,16 +60,16 @@ class InicioController extends Controller
                 'destino' => 'projetos',
             ]);
 
-        $documentos = Documento::where('tipo', '!=', 'folder')
-            ->orderBy('ordem')
+        $documentos = Documento::with('pasta')
+            ->orderByDesc('updated_at')
             ->limit(self::LIMITE_ATIVIDADE)
             ->get()
             ->map(fn (Documento $documento) => [
-                'titulo' => $documento->exibicao,
-                'detalhe' => $documento->detalhe,
+                'titulo' => $documento->nomeDoArquivo(),
+                'detalhe' => "Arquivado em {$documento->pasta->nome}",
                 'etiqueta' => 'Documento',
-                'quando' => $documento->pasta,
-                'ordem' => Contadores::HOJE,
+                'quando' => $documento->updated_at->format('d/m/Y'),
+                'ordem' => $documento->updated_at->format('Y-m-d'),
                 'destino' => 'documentos',
             ]);
 

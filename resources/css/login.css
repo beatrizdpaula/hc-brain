@@ -139,6 +139,7 @@
     background: transparent;
     color: var(--roxo-claro);
     font-size: var(--texto-base);
+    text-decoration: none;
 }
 
 .login-link:hover {
@@ -180,14 +181,16 @@
     display: block;
 }
 
-.login-demo {
-    padding-top: var(--esp-4);
-    margin-top: var(--esp-6);
-    border-top: 1px solid var(--border);
-    color: var(--texto-fraco);
-    font-size: var(--texto-sm);
+/* Recado de sucesso: senha trocada, link de recuperação enviado. */
+.login-aviso {
+    padding: var(--esp-3);
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--verde-fundo);
+    border-radius: var(--raio-sm);
+    background: var(--verde-fundo);
+    color: var(--verde);
+    font-size: var(--texto-base);
     line-height: var(--altura-solta);
-    text-align: center;
 }
 
 @media (max-width: 500px) {

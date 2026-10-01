@@ -14,6 +14,10 @@ class Treinamento extends Model
 {
     protected $table = 'treinamentos';
 
+    public const TIPOS = ['Curso', 'Trilha', 'Manual', 'Fluxograma'];
+
+    public const NIVEIS = ['Iniciante', 'Intermediário', 'Avançado', 'Todos'];
+
     public $incrementing = false;
 
     protected $keyType = 'string';

@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Notifications\RedefinirSenha;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class AutenticacaoTest extends TestCase
@@ -30,7 +33,7 @@ class AutenticacaoTest extends TestCase
 
         $this->post('/login', [
             'email' => 'beatriz@healthcare.com.br',
-            'password' => '123456',
+            'password' => self::SENHA,
         ])->assertRedirect('/reunioes');
 
         $this->assertAuthenticated();
@@ -57,7 +60,7 @@ class AutenticacaoTest extends TestCase
 
         $this->post('/login', [
             'email' => $beatriz->email,
-            'password' => '123456',
+            'password' => self::SENHA,
         ]);
 
         $this->assertTrue($beatriz->refresh()->ultimo_acesso->isSameMinute(now()));
@@ -77,7 +80,7 @@ class AutenticacaoTest extends TestCase
 
         $this->post('/login', [
             'email' => 'beatriz@healthcare.com.br',
-            'password' => '123456',
+            'password' => self::SENHA,
         ])->assertStatus(429);
 
         $this->assertGuest();
@@ -89,7 +92,7 @@ class AutenticacaoTest extends TestCase
 
         $this->post('/login', [
             'email' => 'beatriz@healthcare.com.br',
-            'password' => '123456',
+            'password' => self::SENHA,
             'remember' => 'on',
         ])->assertCookie('hc_brain_email', 'beatriz@healthcare.com.br');
     }
@@ -101,5 +104,70 @@ class AutenticacaoTest extends TestCase
             ->assertRedirect('/login');
 
         $this->assertGuest();
+    }
+
+    public function test_pedido_de_recuperacao_envia_o_link(): void
+    {
+        $beatriz = $this->beatriz();
+        Notification::fake();
+
+        $this->post('/esqueci-a-senha', ['email' => $beatriz->email])
+            ->assertSessionHas('status');
+
+        Notification::assertSentTo($beatriz, RedefinirSenha::class);
+    }
+
+    /** A tela não pode virar uma lista de quem tem acesso ao HC Brain. */
+    public function test_email_desconhecido_recebe_a_mesma_resposta(): void
+    {
+        $this->beatriz();
+        Notification::fake();
+
+        $this->post('/esqueci-a-senha', ['email' => 'ninguem@healthcare.com.br'])
+            ->assertSessionHas('status')
+            ->assertSessionHasNoErrors();
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_token_valido_troca_a_senha(): void
+    {
+        $beatriz = $this->beatriz();
+        $token = Password::createToken($beatriz);
+
+        $this->post('/redefinir-senha', [
+            'token' => $token,
+            'email' => $beatriz->email,
+            'password' => 'nova-senha-forte',
+            'password_confirmation' => 'nova-senha-forte',
+        ])->assertRedirect('/login');
+
+        $this->post('/login', [
+            'email' => $beatriz->email,
+            'password' => 'nova-senha-forte',
+        ])->assertRedirect('/');
+
+        $this->assertAuthenticated();
+    }
+
+    public function test_token_invalido_nao_troca_a_senha(): void
+    {
+        $beatriz = $this->beatriz();
+
+        $this->from('/redefinir-senha/qualquer-coisa')
+            ->post('/redefinir-senha', [
+                'token' => 'token-que-nunca-existiu',
+                'email' => $beatriz->email,
+                'password' => 'nova-senha-forte',
+                'password_confirmation' => 'nova-senha-forte',
+            ])
+            ->assertSessionHasErrors('email');
+
+        $this->post('/login', [
+            'email' => $beatriz->email,
+            'password' => self::SENHA,
+        ]);
+
+        $this->assertAuthenticated();
     }
 }

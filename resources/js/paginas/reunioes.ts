@@ -6,9 +6,14 @@
    ========================================================= */
 
 import {
+    cadastrarReuniao,
     carregarReunioes,
+    excluirReuniao,
+    salvarReuniao,
+    STATUS_DE_REUNIAO,
     tagDoStatus,
     tagDoTipoDeReuniao,
+    TIPOS_DE_REUNIAO,
     type Reuniao,
 } from "../dados/reunioes.ts";
 import {
@@ -27,6 +32,7 @@ import {
     type VisualizacaoLista,
 } from "../comum/estado.ts";
 import { escapar, iniciais, mesPorExtenso, plural } from "../comum/formato.ts";
+import { abrirFormulario } from "../comum/formulario.ts";
 import { desenharIcones, icone } from "../comum/icones.ts";
 import { openMeetingModal, showModal } from "../comum/modal.ts";
 import { iniciarPagina } from "../comum/shell.ts";
@@ -39,9 +45,9 @@ const busca = campo("meetingSearch");
 const empresaFilter = selecao("meetingEmpresaFilter");
 const statusFilter = selecao("meetingStatusFilter");
 
-const { reunioes: meetingsData, empresas } = await carregarReunioes();
+let { reunioes: meetingsData, empresas } = await carregarReunioes();
 
-empresas.forEach((nome) => {
+empresas.forEach(({ nome }) => {
     const opcao = document.createElement("option");
     opcao.value = nome;
     opcao.textContent = nome;
@@ -301,7 +307,7 @@ function renderReunioes(): void {
                 const reuniao = meetingsData.find(
                     (registro) => registro.id === Number(dado(elemento, "meetingId")),
                 );
-                if (reuniao) openMeetingModal(reuniao);
+                if (reuniao) openMeetingModal(reuniao, () => abrirFormularioDe(reuniao));
             });
         });
     });
@@ -379,12 +385,145 @@ porId("calendarToday").addEventListener("click", () => {
     renderCalendario();
 });
 
-porId("newMeeting").addEventListener("click", () => {
-    showModal(
-        "Nova reunião",
-        "Na versão final, você poderá registrar uma nova reunião, escolher o tipo (abertura, transferência, dúvidas, comercial, alinhamento ou financeira) e vinculá-la diretamente à empresa e ao sócio responsável.",
-    );
-});
+/**
+ * O mesmo formulário registra e edita: os campos são os mesmos, muda só se já
+ * existe uma reunião por trás. `reuniao` ausente é um registro novo.
+ */
+function abrirFormularioDe(reuniao?: Reuniao): void {
+    if (!empresas.length) {
+        showModal(
+            "Nenhuma empresa cadastrada",
+            "Toda reunião pertence a uma empresa da carteira. Cadastre a empresa primeiro, em Empresas & clientes.",
+        );
+        return;
+    }
+
+    void abrirFormulario({
+        titulo: reuniao ? `Reunião de ${reuniao.tipo}` : "Nova reunião",
+        descricao: reuniao
+            ? `${reuniao.empresa} • registrada em ${reuniao.data}.`
+            : "A reunião entra no histórico da empresa e aparece na agenda.",
+        campos: [
+            {
+                nome: "empresaId",
+                rotulo: "Empresa",
+                tipo: "selecao",
+                valor: reuniao?.empresaId,
+                opcoes: empresas.map(({ id, nome }) => ({ valor: id, rotulo: nome })),
+            },
+            {
+                nome: "tipo",
+                rotulo: "Tipo",
+                tipo: "selecao",
+                valor: reuniao?.tipo,
+                opcoes: TIPOS_DE_REUNIAO.map((tipo) => ({ valor: tipo, rotulo: tipo })),
+            },
+            {
+                nome: "data",
+                rotulo: "Data",
+                tipo: "data",
+                valor: reuniao?.dataOrd,
+                obrigatorio: true,
+            },
+            {
+                nome: "horario",
+                rotulo: "Horário",
+                tipo: "hora",
+                valor: reuniao?.horario ?? "",
+                dica: "Opcional.",
+            },
+            {
+                nome: "responsavel",
+                rotulo: "Responsável interno",
+                valor: reuniao?.responsavel,
+                obrigatorio: true,
+            },
+            {
+                nome: "status",
+                rotulo: "Status",
+                tipo: "selecao",
+                valor: reuniao?.status ?? "Agendada",
+                opcoes: STATUS_DE_REUNIAO.map((status) => ({
+                    valor: status,
+                    rotulo: status,
+                })),
+            },
+            {
+                nome: "participantes",
+                rotulo: "Participantes",
+                tipo: "linhas",
+                valor: reuniao?.participantes.join("\n"),
+                dica: "Um nome por linha.",
+                largo: true,
+            },
+            {
+                nome: "resumo",
+                rotulo: "Resumo",
+                tipo: "longo",
+                valor: reuniao?.resumo,
+                obrigatorio: true,
+                largo: true,
+            },
+            {
+                nome: "decisoes",
+                rotulo: "Decisões tomadas",
+                tipo: "linhas",
+                valor: reuniao?.decisoes.join("\n"),
+                dica: "Uma por linha.",
+                largo: true,
+            },
+            {
+                nome: "proximosPassos",
+                rotulo: "Próximos passos",
+                tipo: "linhas",
+                valor: reuniao?.proximosPassos.join("\n"),
+                dica: "Um por linha.",
+                largo: true,
+            },
+        ],
+        confirmar: reuniao ? "Salvar reunião" : "Registrar reunião",
+        excluir: reuniao
+            ? {
+                  rotulo: "Excluir reunião",
+                  confirmacao:
+                      "A reunião sai do histórico da empresa e da agenda. Não há como desfazer.",
+                  aoExcluir: async () => {
+                      await excluirReuniao(reuniao.id);
+                      await recarregar();
+                  },
+              }
+            : undefined,
+        aoSalvar: async (valores) => {
+            const dados = {
+                empresaId: valores.texto("empresaId"),
+                tipo: valores.texto("tipo"),
+                data: valores.texto("data"),
+                horario: valores.texto("horario") || null,
+                responsavel: valores.texto("responsavel"),
+                status: valores.texto("status"),
+                resumo: valores.texto("resumo"),
+                participantes: valores.linhas("participantes"),
+                decisoes: valores.linhas("decisoes"),
+                proximosPassos: valores.linhas("proximosPassos"),
+            };
+
+            if (reuniao) {
+                await salvarReuniao(reuniao.id, dados);
+            } else {
+                await cadastrarReuniao(dados);
+            }
+
+            await recarregar();
+        },
+    });
+}
+
+async function recarregar(): Promise<void> {
+    ({ reunioes: meetingsData, empresas } = await carregarReunioes());
+    renderReunioes();
+}
+
+porId("newMeeting").addEventListener("click", () => abrirFormularioDe());
 
 observarEstado(["reunioes"], () => {
     aplicarEstadoNosControles();

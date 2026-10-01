@@ -17,6 +17,10 @@
           relacionamento.
         </p>
       </div>
+
+      <div class="page-header-actions">
+        <button class="primary" id="novaEmpresa" type="button">Nova empresa</button>
+      </div>
     </div>
 
     <div class="empresas-toolbar">

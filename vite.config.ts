@@ -6,6 +6,7 @@ import laravel from "laravel-vite-plugin";
 // O Blade de cada tela pede esse par pelo @vite, então todos entram como entrada.
 const TELAS = [
   "login",
+  "senha",
   "inicio",
   "pesquisa",
   "documentos",

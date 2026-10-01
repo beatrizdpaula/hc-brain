@@ -169,6 +169,13 @@
     font-size: var(--texto-base);
 }
 
+/* Editar fecha o bloco: ocupa a largura toda, abaixo das etapas e da ficha. */
+.processo-acoes {
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+}
+
 @media (max-width: 850px) {
     .processo-corpo {
         grid-template-columns: 1fr;

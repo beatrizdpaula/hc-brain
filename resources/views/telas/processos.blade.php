@@ -17,6 +17,10 @@
           frequência acontece.
         </p>
       </div>
+
+      <div class="page-header-actions">
+        <button class="primary" id="novoProcesso" type="button">Novo processo</button>
+      </div>
     </div>
 
     <div class="filtros">
