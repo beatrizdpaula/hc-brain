@@ -23,6 +23,7 @@ class CriarAcesso extends Command
         {--email= : E-mail usado para entrar}
         {--perfil= : Administrador, Gestor ou Colaborador}
         {--area= : Área da pessoa}
+        {--senha= : Senha, para quando digitar escondido não é possível}
         {--senha-aleatoria : Gera a senha em vez de pedir, e a mostra uma vez}';
 
     protected $description = 'Cria ou atualiza um acesso ao HC Brain';
@@ -81,8 +82,16 @@ class CriarAcesso extends Command
      */
     private function senha(): string
     {
+        if ($senha = $this->option('senha')) {
+            $this->components->warn('A senha passada por opção fica no histórico do terminal; troque-a depois.');
+
+            return $senha;
+        }
+
         if ($this->option('senha-aleatoria')) {
-            $senha = Str::password(20);
+            // Sem símbolos: é uma senha para ser lida da tela e digitada à
+            // mão uma vez, e "|" ou "\" nessa hora só atrapalham.
+            $senha = Str::password(16, symbols: false);
 
             $this->components->warn("Senha gerada: {$senha}");
             $this->components->warn('Ela não será mostrada de novo. Troque-a no primeiro acesso.');

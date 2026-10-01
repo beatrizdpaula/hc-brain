@@ -66,6 +66,22 @@ class CriarAcessoTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'beatriz@healthcare.com.br']);
     }
 
+    /** Digitar escondido nem sempre funciona no terminal de quem está usando. */
+    public function test_senha_pode_vir_por_opcao(): void
+    {
+        $this->artisan('hc:acesso', [
+            '--nome' => 'Beatriz',
+            '--email' => 'beatriz@healthcare.com.br',
+            '--perfil' => 'Administrador',
+            '--area' => 'Gestão',
+            '--senha' => 'senha-escolhida',
+        ])->assertSuccessful();
+
+        $usuario = User::where('email', 'beatriz@healthcare.com.br')->firstOrFail();
+
+        $this->assertTrue(Hash::check('senha-escolhida', $usuario->password));
+    }
+
     /** Rodar de novo para a mesma pessoa é trocar a senha, não duplicar o acesso. */
     public function test_email_que_ja_existe_atualiza_o_acesso(): void
     {
