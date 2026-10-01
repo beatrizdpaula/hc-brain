@@ -11,11 +11,13 @@
 return [
 
     /*
-    | Senha da equipe criada pelo `UsuarioSeeder`. Definida apenas em
-    | desenvolvimento: sem ela o seeder gera senhas aleatórias, então uma base
-    | semeada em produção não nasce com credencial conhecida.
+    | Senha da equipe criada pelo `UsuarioSeeder`. O padrão é o que a própria
+    | tela de login anuncia no rodapé de protótipo demonstrativo: a base
+    | semeada serve para mostrar o sistema, e esconder a senha dela só
+    | atrapalharia. Num ambiente que deixe de ser demonstração, defina a
+    | variável — ou crie o acesso pelo `hc:acesso` e apague a equipe semeada.
     */
-    'senha_semeada' => env('HC_SENHA_SEMEADA'),
+    'senha_semeada' => env('HC_SENHA_SEMEADA') ?: '123456',
 
     /*
     | O acesso que abre um ambiente recém-publicado. Lá o seeder dá senhas

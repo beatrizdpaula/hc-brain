@@ -27,13 +27,11 @@ php artisan serve
 ```
 
 O banco é SQLite (`database/database.sqlite`) e `migrate --seed` já popula tudo. A primeira
-tela é o login, e a senha da equipe semeada é a que estiver em `HC_SENHA_SEMEADA` no `.env`
-— não há senha escrita no repositório. Sem essa variável, o seeder cria cada pessoa com uma
-senha aleatória e avisa no terminal: é assim que precisa ficar em produção, para que semear a
-base não produza credencial conhecida por quem leu o código.
+tela é o login, e a equipe semeada entra com `123456` — a senha que o rodapé da própria tela
+anuncia, porque a base é uma demonstração. Para mudá-la, defina `HC_SENHA_SEMEADA` no `.env`.
 
 Entre com qualquer e-mail da equipe (`beatriz@healthcare.com.br`, por exemplo) e essa senha.
-Se ela se perder, "Esqueci minha senha" envia o link de recuperação; em desenvolvimento
+Se ela se perder, a tela de recuperação em `/senha` envia o link; em desenvolvimento
 `MAIL_MAILER=log` guarda o e-mail em `storage/logs/laravel.log`.
 
 Para criar um acesso com a senha que você escolher — ou trocar a de alguém —, use:
@@ -223,15 +221,19 @@ regenerada no login e invalidada no logout.
 
 A recuperação de senha é a do Laravel: um token de validade curta chega por e-mail e só ele
 autoriza a troca. O pedido é limitado a 5 por minuto e a resposta é sempre a mesma, exista ou
-não a conta, para que a tela não vire uma lista de quem tem acesso ao HC Brain.
+não a conta, para que a tela não vire uma lista de quem tem acesso ao HC Brain. Ela vive em
+`/senha`; a tela de login não leva até lá, onde o botão "Esqueci minha senha" é o aviso
+demonstrativo do protótipo.
 
 Na tela de Usuários, duas coisas não são permitidas, porque nenhuma delas tem volta pela
 interface: excluir o próprio acesso e remover ou rebaixar a última pessoa com perfil de
 Administrador ativo.
 
-O primeiro administrador em produção nasce de `php artisan hc:acesso`, e não de um seeder.
-É de propósito: a senha é digitada no terminal de quem está publicando, não escrita em um
-arquivo que acompanha o repositório.
+A equipe semeada é de demonstração e entra com uma senha conhecida, anunciada na própria
+tela de login. Num ambiente que deixe de ser demonstração isso precisa cair: defina
+`HC_SENHA_SEMEADA`, ou crie o acesso de verdade com `php artisan hc:acesso` — ele pede a
+senha no terminal de quem está publicando, sem escrevê-la em arquivo nenhum — e apague a
+equipe semeada pela tela de Usuários.
 
 Onde não há terminal — é o caso do Render — esse acesso vem de `HC_ACESSO_EMAIL` e
 `HC_ACESSO_SENHA`, que o `hc:preparar` lê a cada inicialização. Enquanto as variáveis

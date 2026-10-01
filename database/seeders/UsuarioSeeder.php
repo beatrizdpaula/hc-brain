@@ -5,13 +5,11 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 
 /**
- * Equipe inicial com acesso ao HC Brain. A senha sai de `HC_SENHA_SEMEADA`,
- * que só existe no ambiente de desenvolvimento: sem ela cada pessoa nasce com
- * uma senha aleatória, então semear a base em produção não cria credencial
- * conhecida por quem leu o repositório.
+ * Equipe inicial com acesso ao HC Brain. Todas entram com a mesma senha, a de
+ * `hc.senha_semeada` — a que o rodapé da tela de login anuncia. É uma base de
+ * demonstração: quem recebe o sistema para ver precisa conseguir entrar.
  */
 class UsuarioSeeder extends Seeder
 {
@@ -34,16 +32,10 @@ class UsuarioSeeder extends Seeder
     {
         $senha = config('hc.senha_semeada');
 
-        if ($senha === null) {
-            $this->command?->warn(
-                'HC_SENHA_SEMEADA não definida: a equipe será criada com senhas aleatórias.'
-            );
-        }
-
         foreach (self::EQUIPE as [$nome, $email, $perfil, $area, $status, $acesso]) {
             User::updateOrCreate(['email' => $email], [
                 'name' => $nome,
-                'password' => $senha ?? Str::password(32),
+                'password' => $senha,
                 'perfil' => $perfil,
                 'area' => $area,
                 'status' => $status,
