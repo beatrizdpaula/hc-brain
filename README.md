@@ -36,6 +36,16 @@ Entre com qualquer e-mail da equipe (`beatriz@healthcare.com.br`, por exemplo) e
 Se ela se perder, "Esqueci minha senha" envia o link de recuperação; em desenvolvimento
 `MAIL_MAILER=log` guarda o e-mail em `storage/logs/laravel.log`.
 
+Para criar um acesso com a senha que você escolher — ou trocar a de alguém —, use:
+
+```bash
+php artisan hc:acesso
+```
+
+Ele pergunta nome, e-mail, perfil e área, pede a senha duas vezes escondida e grava. Rodar de
+novo para o mesmo e-mail atualiza o acesso em vez de duplicá-lo. Com `--senha-aleatoria` ele
+gera a senha e a mostra uma única vez.
+
 As decisões que mudam de um ambiente para o outro ficam em `config/hc.php`: a senha semeada,
 o disco onde os documentos enviados são guardados, o tamanho máximo e as extensões aceitas.
 
@@ -218,6 +228,10 @@ não a conta, para que a tela não vire uma lista de quem tem acesso ao HC Brain
 Na tela de Usuários, duas coisas não são permitidas, porque nenhuma delas tem volta pela
 interface: excluir o próprio acesso e remover ou rebaixar a última pessoa com perfil de
 Administrador ativo.
+
+O primeiro administrador em produção nasce de `php artisan hc:acesso`, e não de um seeder.
+É de propósito: a senha é digitada no terminal de quem está publicando, não escrita em um
+arquivo que acompanha o repositório.
 
 Erros têm página própria e com a marca do HC Brain (`resources/views/errors/`): 403, 404, 419,
 429 e 500. Ninguém cai na tela crua do Laravel.
