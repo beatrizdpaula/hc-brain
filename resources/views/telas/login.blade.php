@@ -21,10 +21,6 @@
         financeiro e a Sofia.
       </p>
 
-      @if (session('status'))
-        <div class="login-aviso" role="status">{{ session('status') }}</div>
-      @endif
-
       <form id="loginForm" method="POST" action="{{ route('login') }}">
         @csrf
 
@@ -59,9 +55,9 @@
                    @checked(old('remember', $emailLembrado !== null)) />
             <span>Lembrar meu acesso</span>
           </label>
-          <a class="login-link" href="{{ route('senha.solicitar') }}">
+          <button type="button" class="login-link" id="forgotLogin">
             Esqueci minha senha
-          </a>
+          </button>
         </div>
 
         <button class="login-submit" type="submit">Entrar no HC Brain</button>
@@ -70,6 +66,11 @@
           @error('email'){{ $message }}@else E-mail ou senha incorretos. Verifique os dados e tente novamente. @enderror
         </div>
       </form>
+
+      <div class="login-demo">
+        Protótipo demonstrativo • testes: beatriz@healthcare.com.br / 123456 ·
+        matheus@healthcare.com.br / 123456
+      </div>
     </div>
   </div>
 @endsection
