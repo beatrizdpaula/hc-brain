@@ -10,7 +10,11 @@
    no banco, atrás da API.
    ========================================================= */
 
-import type { MensagemSofia } from "../dados/sofia.ts";
+import {
+    tituloDaConversa,
+    type ConversaSofia,
+    type MensagemSofia,
+} from "../dados/sofia.ts";
 
 const CHAVE = "hcBrainEstado";
 const CANAL = "hcBrainSincronia";
@@ -78,7 +82,9 @@ export interface EstadoComercial {
 
 export interface EstadoSofia {
     modo: ModoSofia;
-    mensagens: MensagemSofia[];
+    /** null é um chat novo, ainda sem mensagem — não entra na lista. */
+    conversaAtiva: string | null;
+    conversas: ConversaSofia[];
 }
 
 export interface Estado {
@@ -136,8 +142,56 @@ const ESTADO_PADRAO: Estado = {
     treinamentos: { busca: "", tipo: "Todos", nivel: "Todos" },
     financeiro: { busca: "", regime: "Todos" },
     comercial: { periodo: "2026-09" },
-    sofia: { modo: "search", mensagens: [] },
+    sofia: { modo: "search", conversaAtiva: null, conversas: [] },
 };
+
+function conversaUtil(valor: unknown): valor is ConversaSofia {
+    if (!valor || typeof valor !== "object") return false;
+    const conversa = valor as ConversaSofia;
+    return (
+        typeof conversa.id === "string" &&
+        typeof conversa.titulo === "string" &&
+        typeof conversa.atualizadoEm === "number" &&
+        Array.isArray(conversa.mensagens)
+    );
+}
+
+/**
+ * A versão anterior guardava uma conversa só, em `mensagens`. Quem já
+ * conversou com a Sofia não perde esse histórico: ele vira o primeiro chat.
+ */
+function normalizarSofia(
+    bruto: (EstadoSofia & { mensagens?: MensagemSofia[] }) | undefined,
+): EstadoSofia {
+    const modo: ModoSofia = bruto?.modo === "base" ? "base" : "search";
+    const conversas = Array.isArray(bruto?.conversas)
+        ? bruto.conversas.filter(conversaUtil)
+        : [];
+
+    if (!conversas.length && Array.isArray(bruto?.mensagens) && bruto.mensagens.length) {
+        const id = crypto.randomUUID();
+        return {
+            modo,
+            conversaAtiva: id,
+            conversas: [
+                {
+                    id,
+                    titulo: tituloDaConversa(bruto.mensagens),
+                    atualizadoEm: Date.now(),
+                    mensagens: bruto.mensagens,
+                },
+            ],
+        };
+    }
+
+    const conversaAtiva = conversas.some(
+        (conversa) => conversa.id === bruto?.conversaAtiva,
+    )
+        ? (bruto?.conversaAtiva ?? null)
+        : null;
+
+    return { modo, conversaAtiva, conversas };
+}
 
 function clonar<T>(valor: T): T {
     return structuredClone(valor);
@@ -166,7 +220,9 @@ function mesclar(padrao: unknown, salvo: unknown): unknown {
 function ler(): Estado {
     try {
         const bruto = localStorage.getItem(CHAVE);
-        return mesclar(ESTADO_PADRAO, bruto ? JSON.parse(bruto) : null) as Estado;
+        const lido = mesclar(ESTADO_PADRAO, bruto ? JSON.parse(bruto) : null) as Estado;
+        lido.sofia = normalizarSofia(lido.sofia);
+        return lido;
     } catch {
         return clonar(ESTADO_PADRAO);
     }

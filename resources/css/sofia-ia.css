@@ -1,22 +1,206 @@
 /* ==========================================================================
    SOFIA — INTERFACE DE IA
-   Uma coluna centralizada: boas-vindas e sugestões no topo, a conversa no
-   meio e o compositor fixo embaixo.
+   Lateral com os chats e, à direita, a conversa: boas-vindas no centro
+   quando o chat está vazio, mensagens no meio e o compositor embaixo.
    ========================================================================== */
 
 .sofia-ai-screen {
+    position: relative;
     display: flex;
-    justify-content: center;
-    min-height: calc(100vh - 52px);
+    height: calc(100vh - 52px);
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   LISTA DE CHATS
+   -------------------------------------------------------------------------- */
+.sofia-historico {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    width: 264px;
+    min-height: 0;
+    padding: var(--esp-4) var(--esp-3);
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.sofia-historico-topo {
+    flex-shrink: 0;
+}
+
+.sofia-nova-conversa {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    width: 100%;
+    height: 36px;
+    padding: 0 var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface-alto);
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-medio);
+    transition: var(--transicao);
+}
+
+.sofia-nova-conversa svg {
+    width: 16px;
+    height: 16px;
+}
+
+.sofia-nova-conversa:hover {
+    border-color: var(--roxo);
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+}
+
+.sofia-historico-rotulo,
+.sofia-historico-grupo {
+    margin: var(--esp-5) var(--esp-2) var(--esp-2);
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.sofia-historico-grupo {
+    margin-top: var(--esp-4);
+}
+
+.sofia-historico-grupo:first-child {
+    margin-top: var(--esp-2);
+}
+
+.sofia-conversas {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.sofia-historico-vazio {
+    margin: var(--esp-2);
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+    line-height: var(--altura-solta);
+}
+
+.sofia-conversa {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-1);
+    min-height: 36px;
+    border-radius: var(--raio-sm);
+}
+
+.sofia-conversa:hover,
+.sofia-conversa.ativa {
+    background: var(--surface-hover);
+}
+
+.sofia-conversa.ativa {
+    background: var(--roxo-fundo);
+}
+
+.sofia-conversa-abrir {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    padding: 0 var(--esp-2) 0 var(--esp-3);
+    overflow: hidden;
+    border: none;
+    background: transparent;
+    color: var(--texto);
+    font-size: var(--texto-base);
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sofia-conversa.ativa .sofia-conversa-abrir {
+    color: var(--roxo-claro);
+}
+
+.sofia-conversa-abrir:hover {
+    color: var(--texto-forte);
+}
+
+.sofia-conversa-apagar {
+    flex-shrink: 0;
+    margin-right: var(--esp-1);
+    opacity: 0;
+}
+
+.sofia-conversa:hover .sofia-conversa-apagar,
+.sofia-conversa:focus-within .sofia-conversa-apagar {
+    opacity: 1;
+}
+
+.sofia-historico-fundo {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   COLUNA DA CONVERSA
+   -------------------------------------------------------------------------- */
+.sofia-ai-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.sofia-topo {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: var(--esp-2);
+    height: 48px;
+    padding: 0 var(--esp-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.sofia-abrir-historico {
+    display: none;
+}
+
+.sofia-titulo-conversa {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    font-weight: var(--peso-medio);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sofia-coluna {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: min(760px, 100%);
+    min-height: 0;
+    margin: 0 auto;
     padding: 0 var(--esp-6);
 }
 
-.sofia-ai-main {
+.sofia-palco {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    width: min(760px, 100%);
-    min-height: calc(100vh - 52px);
-    padding: var(--esp-12) 0 var(--esp-6);
+    justify-content: safe center;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.sofia-palco.em-conversa {
+    justify-content: flex-start;
 }
 
 /* --------------------------------------------------------------------------
@@ -24,6 +208,7 @@
    -------------------------------------------------------------------------- */
 .sofia-welcome {
     margin-bottom: var(--esp-6);
+    text-align: center;
 }
 
 .sofia-welcome[hidden] {
@@ -108,7 +293,7 @@
     display: none;
     flex: 1;
     min-height: 0;
-    padding-bottom: var(--esp-5);
+    padding: var(--esp-6) 0 var(--esp-4);
     overflow-y: auto;
 }
 
@@ -117,37 +302,58 @@
 }
 
 .message {
-    max-width: 80%;
-    padding: var(--esp-3) var(--esp-4);
-    margin-bottom: var(--esp-3);
-    border-radius: var(--raio-lg);
+    display: flex;
+    max-width: 100%;
+    margin-bottom: var(--esp-4);
     font-size: var(--texto-md);
     line-height: var(--altura-solta);
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.message.user .message-texto {
+    max-width: min(80%, 560px);
+    padding: var(--esp-3) var(--esp-4);
+    border-radius: var(--raio-lg);
+    border-bottom-right-radius: var(--raio-sm);
+    background: var(--roxo);
+    color: #fff;
     white-space: pre-line;
 }
 
 .message.bot {
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--texto);
-    border-bottom-left-radius: var(--raio-sm);
+    gap: var(--esp-3);
+    align-items: flex-start;
 }
 
-.message.user {
-    margin-left: auto;
-    background: var(--roxo);
+.message.bot .message-texto {
+    min-width: 0;
+    padding-top: var(--esp-1);
+    color: var(--texto);
+    white-space: pre-line;
+}
+
+.sofia-avatar {
+    display: grid;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--raio-sm);
+    background: linear-gradient(135deg, var(--roxo), var(--azul));
     color: #fff;
-    border-bottom-right-radius: var(--raio-sm);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    place-items: center;
 }
 
 /* --------------------------------------------------------------------------
    COMPOSITOR
    -------------------------------------------------------------------------- */
 .sofia-compose-wrap {
-    position: sticky;
-    bottom: 0;
+    flex-shrink: 0;
     padding-bottom: var(--esp-4);
-    margin-top: auto;
     background: linear-gradient(to top, var(--bg) 70%, transparent);
 }
 
@@ -172,18 +378,22 @@
 
 .sofia-input-row {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
 }
 
-.chat-form input {
+.chat-form textarea {
     flex: 1;
+    width: 100%;
     min-width: 0;
-    height: 36px;
-    padding: 0 var(--esp-2);
+    min-height: 36px;
+    max-height: 160px;
+    padding: var(--esp-2);
     border: none;
     background: transparent;
     color: var(--texto-forte);
     font-size: var(--texto-md);
+    line-height: var(--altura-normal);
+    resize: none;
     outline: none;
 }
 
@@ -312,6 +522,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    height: 24px;
 }
 
 .sofia-digitando i {
@@ -343,20 +554,48 @@
     }
 }
 
-@media (max-width: 700px) {
-    .sofia-ai-screen {
-        padding: 0 var(--esp-3);
+@media (max-width: 860px) {
+    .sofia-abrir-historico {
+        display: grid;
     }
 
-    .sofia-ai-main {
-        padding-top: var(--esp-8);
+    .sofia-historico {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 16;
+        box-shadow: var(--sombra-lg);
+        transform: translateX(-105%);
+        transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .sofia-ai-screen.historico-aberto .sofia-historico {
+        transform: none;
+    }
+
+    .sofia-ai-screen.historico-aberto .sofia-historico-fundo {
+        position: absolute;
+        inset: 0;
+        z-index: 15;
+        display: block;
+        border: none;
+        background: rgb(0 0 0 / 45%);
+    }
+
+    .sofia-conversa-apagar {
+        opacity: 1;
+    }
+
+    .sofia-coluna {
+        padding: 0 var(--esp-3);
     }
 
     .sofia-suggestions {
         grid-template-columns: 1fr;
     }
 
-    .message {
+    .message.user .message-texto {
         max-width: 90%;
     }
 

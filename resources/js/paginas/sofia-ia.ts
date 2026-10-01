@@ -1,18 +1,19 @@
 /* =========================================================
    TELA SOFIA (IA)
-   A conversa fica no estado compartilhado: sai desta página,
-   volta depois e o histórico continua aqui — inclusive em outra
-   aba aberta ao mesmo tempo. A resposta vem do servidor, que lê
-   a mesma base das outras telas.
+   Vários chats, como um assistente de verdade: a lista fica na
+   lateral, um chat novo começa em branco e a conversa aberta
+   continua no navegador — inclusive em outra aba.
    ========================================================= */
 
 import {
     carregarSugestoes,
     perguntarSofia,
+    tituloDaConversa,
     type AutorMensagem,
+    type ConversaSofia,
     type MensagemSofia,
 } from "../dados/sofia.ts";
-import { campo, dado, porId, todos } from "../comum/dom.ts";
+import { alvoMaisProximo, campo, dado, porId, todos } from "../comum/dom.ts";
 import {
     atualizarSecao,
     observarEstado,
@@ -20,7 +21,7 @@ import {
     type ModoSofia,
 } from "../comum/estado.ts";
 import { escapar } from "../comum/formato.ts";
-import { desenharIcones, iconeSeguro } from "../comum/icones.ts";
+import { desenharIcones, icone, iconeSeguro } from "../comum/icones.ts";
 import { showModal } from "../comum/modal.ts";
 import { iniciarPagina } from "../comum/shell.ts";
 
@@ -40,60 +41,209 @@ type ConstrutorDeReconhecimento = new () => ReconhecimentoDeVoz;
 
 iniciarPagina("sofia-ia");
 
+const tela = porId("sofiaTela");
+const palco = porId("sofiaPalco");
+const lista = porId("sofiaConversas");
+const titulo = porId("sofiaTituloConversa");
 const chat = porId("chat");
 const boasVindas = porId("sofiaWelcome");
 const sugestoes = porId("sofiaSuggestions");
-const entrada = campo("question");
+const entrada = porId<HTMLTextAreaElement>("question");
+const envio = porId<HTMLButtonElement>("sofiaSend");
 const anexo = porId("sofiaAttachment");
 const anexoNome = porId("sofiaAttachmentName");
 const arquivos = campo("sofiaFileInput");
 const modoPesquisa = porId("sofiaSearchMode");
 const modoBase = porId("sofiaComputerMode");
 const notaModo = porId("sofiaModeNote");
+const fundoHistorico = porId("sofiaHistoricoFundo");
 
-const ABERTURA: MensagemSofia = {
-    autor: "bot",
-    texto: "Olá! Sou a Sofia. Como posso ajudar?",
-};
+/** Chats que ainda estão esperando a resposta da Sofia. */
+const aguardando = new Set<string>();
 
-let pensando = false;
-
-function renderConversa(): void {
-    const { mensagens } = obterSecao("sofia");
-    const conversa = [ABERTURA, ...mensagens];
-
-    chat.innerHTML =
-        conversa
-            .map(
-                (mensagem) =>
-                    `<div class="message ${mensagem.autor}">${escapar(mensagem.texto)}</div>`,
-            )
-            .join("") +
-        (pensando
-            ? `<div class="message bot"><span class="sofia-digitando"><i></i><i></i><i></i></span></div>`
-            : "");
-
-    const conversando = mensagens.length > 0;
-    chat.classList.toggle("active", conversando || pensando);
-    boasVindas.hidden = conversando || pensando;
-    sugestoes.hidden = conversando || pensando;
-    chat.scrollTop = chat.scrollHeight;
+function novoId(): string {
+    return crypto.randomUUID();
 }
 
-function registrar(autor: AutorMensagem, texto: string): void {
+function conversaAberta(): ConversaSofia | null {
+    const { conversaAtiva, conversas } = obterSecao("sofia");
+    return conversas.find((conversa) => conversa.id === conversaAtiva) ?? null;
+}
+
+function grupoDaData(quando: number): "Hoje" | "Ontem" | "Anteriores" {
+    const data = new Date(quando);
+    const hoje = new Date();
+    const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const inicioOntem = new Date(inicioHoje);
+    inicioOntem.setDate(inicioOntem.getDate() - 1);
+    if (data >= inicioHoje) return "Hoje";
+    if (data >= inicioOntem) return "Ontem";
+    return "Anteriores";
+}
+
+function fecharHistorico(): void {
+    tela.classList.remove("historico-aberto");
+    fundoHistorico.hidden = true;
+}
+
+function abrirHistorico(): void {
+    tela.classList.add("historico-aberto");
+    fundoHistorico.hidden = false;
+}
+
+function ajustarCampo(): void {
+    entrada.style.height = "auto";
+    entrada.style.height = `${Math.min(entrada.scrollHeight, 160)}px`;
+}
+
+function atualizarEnvio(): void {
+    const aberta = conversaAberta();
+    const ocupada = aberta !== null && aguardando.has(aberta.id);
+    envio.disabled = ocupada || entrada.value.trim() === "";
+}
+
+function htmlMensagem(mensagem: MensagemSofia): string {
+    if (mensagem.autor === "user") {
+        return `<div class="message user"><div class="message-texto">${escapar(mensagem.texto)}</div></div>`;
+    }
+
+    return `
+      <div class="message bot">
+        <span class="sofia-avatar" aria-hidden="true">S</span>
+        <div class="message-texto">${escapar(mensagem.texto)}</div>
+      </div>
+    `;
+}
+
+function renderConversa(): void {
+    const aberta = conversaAberta();
+    const mensagens = aberta?.mensagens ?? [];
+    const pensando = aberta !== null && aguardando.has(aberta.id);
+    const conversando = mensagens.length > 0 || pensando;
+
+    chat.innerHTML =
+        mensagens.map(htmlMensagem).join("") +
+        (pensando
+            ? `<div class="message bot"><span class="sofia-avatar" aria-hidden="true">S</span><div class="message-texto"><span class="sofia-digitando"><i></i><i></i><i></i></span></div></div>`
+            : "");
+
+    chat.classList.toggle("active", conversando);
+    palco.classList.toggle("em-conversa", conversando);
+    boasVindas.hidden = conversando;
+    sugestoes.hidden = conversando;
+    titulo.textContent = aberta?.titulo ?? "Novo chat";
+
+    if (conversando) chat.scrollTop = chat.scrollHeight;
+    atualizarEnvio();
+}
+
+function renderHistorico(): void {
+    const { conversaAtiva, conversas } = obterSecao("sofia");
+    const ordem = [...conversas].sort((a, b) => b.atualizadoEm - a.atualizadoEm);
+
+    if (!ordem.length) {
+        lista.innerHTML = `<p class="sofia-historico-vazio">Seus chats aparecem aqui.</p>`;
+        return;
+    }
+
+    const grupos = ["Hoje", "Ontem", "Anteriores"] as const;
+    lista.innerHTML = grupos
+        .map((nome) => {
+            const itens = ordem.filter(
+                (conversa) => grupoDaData(conversa.atualizadoEm) === nome,
+            );
+            if (!itens.length) return "";
+
+            return `
+              <p class="sofia-historico-grupo">${nome}</p>
+              ${itens
+                  .map((conversa) => {
+                      const ativa = conversa.id === conversaAtiva ? " ativa" : "";
+                      return `
+                        <div class="sofia-conversa${ativa}">
+                          <button type="button" class="sofia-conversa-abrir" data-conversa="${escapar(conversa.id)}">
+                            ${escapar(conversa.titulo)}
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-button sofia-conversa-apagar"
+                            data-apagar="${escapar(conversa.id)}"
+                            aria-label="Apagar chat ${escapar(conversa.titulo)}"
+                          >
+                            ${icone("trash-2")}
+                          </button>
+                        </div>
+                      `;
+                  })
+                  .join("")}
+            `;
+        })
+        .join("");
+
+    desenharIcones(lista);
+}
+
+function anexar(id: string, autor: AutorMensagem, texto: string): void {
     atualizarSecao("sofia", (atual) => ({
-        ...atual,
-        mensagens: [...atual.mensagens, { autor, texto }],
+        conversas: atual.conversas
+            .map((conversa) => {
+                if (conversa.id !== id) return conversa;
+                const mensagens = [...conversa.mensagens, { autor, texto }];
+                const primeiraPergunta = !conversa.mensagens.some(
+                    (mensagem) => mensagem.autor === "user",
+                );
+                return {
+                    ...conversa,
+                    mensagens,
+                    titulo:
+                        autor === "user" && primeiraPergunta
+                            ? tituloDaConversa(mensagens)
+                            : conversa.titulo,
+                    atualizadoEm: Date.now(),
+                };
+            })
+            .sort((a, b) => b.atualizadoEm - a.atualizadoEm),
     }));
+}
+
+/** Garante um chat para a pergunta e devolve o id dele. */
+function registrarPergunta(texto: string): string {
+    const atual = obterSecao("sofia");
+    const existente = atual.conversas.find(
+        (conversa) => conversa.id === atual.conversaAtiva,
+    );
+
+    if (existente) {
+        anexar(existente.id, "user", texto);
+        return existente.id;
+    }
+
+    const id = novoId();
+    const mensagem: MensagemSofia = { autor: "user", texto };
+    atualizarSecao("sofia", (estado) => ({
+        conversaAtiva: id,
+        conversas: [
+            {
+                id,
+                titulo: tituloDaConversa([mensagem]),
+                atualizadoEm: Date.now(),
+                mensagens: [mensagem],
+            },
+            ...estado.conversas,
+        ],
+    }));
+    return id;
 }
 
 async function perguntar(pergunta: string): Promise<void> {
     const texto = pergunta.trim();
-    if (!texto || pensando) return;
+    const aberta = conversaAberta();
+    if (!texto || (aberta !== null && aguardando.has(aberta.id))) return;
 
-    registrar("user", texto);
-
-    pensando = true;
+    const id = registrarPergunta(texto);
+    aguardando.add(id);
+    entrada.value = "";
+    ajustarCampo();
     renderConversa();
 
     let resposta: string;
@@ -103,12 +253,40 @@ async function perguntar(pergunta: string): Promise<void> {
         resposta = "Não consegui consultar a base agora. Tente novamente em instantes.";
     }
 
-    pensando = false;
-    registrar("bot", resposta);
+    aguardando.delete(id);
+    anexar(id, "bot", resposta);
 }
 
-function renderSugestoes(lista: { icon: string; text: string }[]): void {
-    sugestoes.innerHTML = lista
+function novoChat(): void {
+    if (obterSecao("sofia").conversaAtiva !== null) {
+        atualizarSecao("sofia", { conversaAtiva: null });
+    }
+    entrada.value = "";
+    ajustarCampo();
+    fecharHistorico();
+    renderConversa();
+    entrada.focus();
+}
+
+function abrirConversa(id: string): void {
+    atualizarSecao("sofia", { conversaAtiva: id });
+    fecharHistorico();
+    entrada.focus();
+}
+
+function apagarConversa(id: string): void {
+    aguardando.delete(id);
+    atualizarSecao("sofia", (atual) => {
+        const conversas = atual.conversas.filter((conversa) => conversa.id !== id);
+        return {
+            conversas,
+            conversaAtiva: atual.conversaAtiva === id ? null : atual.conversaAtiva,
+        };
+    });
+}
+
+function renderSugestoes(itens: { icon: string; text: string }[]): void {
+    sugestoes.innerHTML = itens
         .map(
             (sugestao) => `
         <button type="button" class="sofia-suggestion" data-suggestion="${escapar(sugestao.text)}">
@@ -139,9 +317,35 @@ function aplicarModo(modo: ModoSofia): void {
 
 porId<HTMLFormElement>("chatForm").addEventListener("submit", (evento) => {
     evento.preventDefault();
-    const pergunta = entrada.value;
-    entrada.value = "";
-    void perguntar(pergunta);
+    void perguntar(entrada.value);
+});
+
+entrada.addEventListener("input", () => {
+    ajustarCampo();
+    atualizarEnvio();
+});
+
+entrada.addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter" && !evento.shiftKey) {
+        evento.preventDefault();
+        void perguntar(entrada.value);
+    }
+});
+
+porId("sofiaNovaConversa").addEventListener("click", novoChat);
+porId("sofiaNovaConversaTopo").addEventListener("click", novoChat);
+porId("sofiaAbrirHistorico").addEventListener("click", abrirHistorico);
+fundoHistorico.addEventListener("click", fecharHistorico);
+
+lista.addEventListener("click", (evento) => {
+    const apagar = alvoMaisProximo(evento, "[data-apagar]");
+    if (apagar) {
+        apagarConversa(dado(apagar, "apagar"));
+        return;
+    }
+
+    const abrir = alvoMaisProximo(evento, "[data-conversa]");
+    if (abrir) abrirConversa(dado(abrir, "conversa"));
 });
 
 porId("sofiaAttachBtn").addEventListener("click", () => arquivos.click());
@@ -164,11 +368,6 @@ porId("removeSofiaAttachment").addEventListener("click", () => {
 
 modoPesquisa.addEventListener("click", () => atualizarSecao("sofia", { modo: "search" }));
 modoBase.addEventListener("click", () => atualizarSecao("sofia", { modo: "base" }));
-
-porId("sofiaLimparConversa").addEventListener("click", () => {
-    atualizarSecao("sofia", { mensagens: [] });
-    entrada.focus();
-});
 
 porId("sofiaModelBtn").addEventListener("click", () => {
     showModal(
@@ -193,17 +392,26 @@ porId("sofiaMicBtn").addEventListener("click", () => {
     reconhecimento.lang = "pt-BR";
     reconhecimento.onresult = (evento) => {
         entrada.value = evento.results[0][0].transcript;
+        ajustarCampo();
+        atualizarEnvio();
         entrada.focus();
     };
     reconhecimento.onerror = () => entrada.focus();
     reconhecimento.start();
 });
 
+document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape") fecharHistorico();
+});
+
 observarEstado(["sofia"], () => {
     aplicarModo(obterSecao("sofia").modo);
+    renderHistorico();
     renderConversa();
 });
 
 aplicarModo(obterSecao("sofia").modo);
+renderHistorico();
 renderConversa();
 renderSugestoes(await carregarSugestoes());
+entrada.focus();
