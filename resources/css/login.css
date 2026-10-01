@@ -1,33 +1,200 @@
-/* O botão de ver a senha fica dentro do campo, no lugar do cursor parado. */
-.login-senha {
-    position: relative;
+/* ==========================================================================
+   TELA DE LOGIN
+   Um cartão centralizado, sem menu nem barra superior. Carrega só base.css,
+   então tudo o que é botão e campo é definido aqui.
+   ========================================================================== */
+
+.login-screen {
+    display: grid;
+    min-height: 100vh;
+    padding: var(--esp-6);
+    background:
+        radial-gradient(circle at 50% 20%, rgb(124 108 245 / 16%), transparent 55%),
+        radial-gradient(circle at 10% 90%, rgb(91 140 255 / 10%), transparent 50%),
+        var(--bg);
+    place-items: center;
 }
 
-.login-senha input {
-    padding-right: 72px;
+.login-card {
+    width: min(420px, 100%);
+    padding: var(--esp-8);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-lg);
+    background: var(--surface);
+    box-shadow: var(--sombra-lg);
 }
 
-.login-senha button {
-    position: absolute;
-    top: 0;
-    right: 0;
+.login-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+    margin-bottom: var(--esp-8);
+}
+
+.login-logo {
+    display: grid;
+    flex-shrink: 0;
+    width: 42px;
     height: 42px;
-    padding: 0 var(--esp-3);
-    border: none;
-    background: none;
+    border-radius: var(--raio-md);
+    background: linear-gradient(135deg, var(--roxo), var(--azul));
+    color: #fff;
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+    place-items: center;
+}
+
+.login-brand strong {
+    display: block;
+    color: var(--texto-forte);
+    font-size: var(--texto-lg);
+    font-weight: var(--peso-forte);
+}
+
+.login-brand span {
+    display: block;
+    margin-top: 1px;
+    color: var(--texto-suave);
+    font-size: var(--texto-sm);
+}
+
+.login-title {
+    margin-bottom: var(--esp-2);
+    color: var(--texto-forte);
+    font-size: var(--texto-xl);
+    font-weight: var(--peso-forte);
+    letter-spacing: -0.02em;
+}
+
+.login-subtitle {
+    margin-bottom: var(--esp-6);
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    line-height: var(--altura-solta);
+}
+
+/* --------------------------------------------------------------------------
+   CAMPOS
+   -------------------------------------------------------------------------- */
+.login-field {
+    margin-bottom: var(--esp-4);
+}
+
+.login-field label {
+    display: block;
+    margin-bottom: var(--esp-2);
     color: var(--texto-suave);
     font-size: var(--texto-sm);
     font-weight: var(--peso-medio);
-    cursor: pointer;
+}
+
+.login-field input {
+    width: 100%;
+    height: 42px;
+    padding: 0 var(--esp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-sm);
+    background: var(--surface-alto);
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    outline: none;
     transition: var(--transicao);
 }
 
-.login-senha button:hover {
-    color: var(--texto-forte);
+.login-field input:hover {
+    border-color: var(--border-forte);
 }
 
-.login-senha button:focus-visible {
+.login-field input:focus {
+    border-color: var(--roxo);
+    box-shadow: 0 0 0 3px var(--roxo-fundo);
+}
+
+.login-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--esp-3);
+    margin: var(--esp-2) 0 var(--esp-5);
+}
+
+.login-check {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    cursor: pointer;
+}
+
+.login-check input {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--roxo);
+    cursor: pointer;
+}
+
+.login-link {
+    border: 0;
+    background: transparent;
+    color: var(--roxo-claro);
+    font-size: var(--texto-base);
+    text-decoration: none;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+.login-submit {
+    width: 100%;
+    height: 44px;
+    border: none;
     border-radius: var(--raio-sm);
-    outline: 2px solid var(--roxo);
-    outline-offset: -2px;
+    background: var(--roxo);
+    color: #fff;
+    font-size: var(--texto-md);
+    font-weight: var(--peso-forte);
+    transition: var(--transicao);
+}
+
+.login-submit:hover {
+    background: var(--roxo-claro);
+    color: #10131c;
+}
+
+/* --------------------------------------------------------------------------
+   ERRO E RODAPÉ
+   -------------------------------------------------------------------------- */
+.login-error {
+    display: none;
+    padding: var(--esp-3);
+    margin-top: var(--esp-3);
+    border: 1px solid var(--vermelho-fundo);
+    border-radius: var(--raio-sm);
+    background: var(--vermelho-fundo);
+    color: var(--vermelho);
+    font-size: var(--texto-base);
+}
+
+.login-error.show {
+    display: block;
+}
+
+/* Recado de sucesso: senha trocada, link de recuperação enviado. */
+.login-aviso {
+    padding: var(--esp-3);
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--verde-fundo);
+    border-radius: var(--raio-sm);
+    background: var(--verde-fundo);
+    color: var(--verde);
+    font-size: var(--texto-base);
+    line-height: var(--altura-solta);
+}
+
+@media (max-width: 500px) {
+    .login-card {
+        padding: var(--esp-6);
+    }
 }
