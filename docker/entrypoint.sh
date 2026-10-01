@@ -15,8 +15,12 @@ chmod -R 777 /app/public storage bootstrap/cache database
 # Configura a porta no Apache
 sed -i "s/Listen 80/Listen ${PORT:-10000}/" /etc/apache2/ports.conf
 
-# Força a execução das migrações e seeders
-php artisan migrate:fresh --seed --force
+# Atualiza o schema sem apagar nada: o Render reinicia o contêiner sozinho, e
+# um `migrate:fresh` aqui levaria junto tudo o que foi cadastrado pelo site.
+php artisan migrate --force
+
+# Semeia só se a base estiver vazia e garante o acesso inicial do ambiente.
+php artisan hc:preparar
 
 # Inicia o servidor Apache
 exec apache2-foreground

@@ -233,6 +233,12 @@ O primeiro administrador em produção nasce de `php artisan hc:acesso`, e não 
 É de propósito: a senha é digitada no terminal de quem está publicando, não escrita em um
 arquivo que acompanha o repositório.
 
+Onde não há terminal — é o caso do Render — esse acesso vem de `HC_ACESSO_EMAIL` e
+`HC_ACESSO_SENHA`, que o `hc:preparar` lê a cada inicialização. Enquanto as variáveis
+existirem, elas mandam na senha desse acesso: trocá-las no painel é como se recupera a
+entrada quando ninguém mais consegue entrar. Nome, perfil e área só são gravados na criação,
+então ajustes feitos pela tela de Usuários sobrevivem ao próximo restart.
+
 Erros têm página própria e com a marca do HC Brain (`resources/views/errors/`): 403, 404, 419,
 429 e 500. Ninguém cai na tela crua do Laravel.
 
@@ -281,3 +287,22 @@ incoerente. As telas do menu são percorridas a partir de `Telas::MENU`, então 
 apontando para uma rota que não existe quebra o teste.
 
 A base vem dos seeders e serve de ponto de partida; não há integração externa.
+
+## Publicando
+
+O `Dockerfile` monta a imagem (PHP, Apache, `composer install --no-dev` e o build do Vite) e
+`docker/entrypoint.sh` prepara o contêiner a cada inicialização:
+
+```bash
+php artisan migrate --force
+php artisan hc:preparar
+```
+
+`migrate`, não `migrate:fresh`: o servidor reinicia sozinho, e recriar a base a cada boot
+levaria junto tudo o que foi cadastrado pelo site. O `hc:preparar` semeia apenas quando a
+base está vazia e garante o acesso de `HC_ACESSO_EMAIL` e `HC_ACESSO_SENHA` — as duas
+operações são seguras de repetir.
+
+Falta uma peça para os dados durarem de verdade: o SQLite mora no sistema de arquivos do
+contêiner, que é descartado a cada deploy. Em produção ele precisa de um disco persistente
+montado numa pasta própria, com `DB_DATABASE` apontando para o arquivo lá dentro.

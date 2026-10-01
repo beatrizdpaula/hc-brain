@@ -17,6 +17,19 @@ return [
     */
     'senha_semeada' => env('HC_SENHA_SEMEADA'),
 
+    /*
+    | O acesso que abre um ambiente recém-publicado. Lá o seeder dá senhas
+    | aleatórias de propósito, e num servidor sem terminal — o Render é um —
+    | o ambiente é o único caminho para a primeira entrada. Enquanto estas
+    | variáveis existirem, elas mandam na senha desse acesso: trocá-las é
+    | como se recupera a entrada quando ninguém mais consegue entrar.
+    */
+    'acesso_inicial' => [
+        'email' => env('HC_ACESSO_EMAIL'),
+        'senha' => env('HC_ACESSO_SENHA'),
+        'nome' => env('HC_ACESSO_NOME', 'Administrador'),
+    ],
+
     'documentos' => [
 
         /*
