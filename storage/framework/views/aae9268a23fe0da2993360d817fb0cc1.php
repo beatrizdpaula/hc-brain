@@ -16,11 +16,10 @@
       </div>
     </div>
 
+    
     <div class="documents-tabs" role="tablist">
-      <button class="document-tab active" type="button" data-special="explore">Explorar</button>
-      <button class="document-tab" type="button" data-special="recent">Recentes</button>
-      <button class="document-tab" type="button" data-special="favorites">Favoritos</button>
-      <button class="document-tab" type="button" data-special="shared">Compartilhados comigo</button>
+      <button class="document-tab active" type="button" data-ordem="pastas">Explorar</button>
+      <button class="document-tab" type="button" data-ordem="recentes">Recentes</button>
     </div>
 
     <div class="documents-layout">
@@ -55,16 +54,21 @@
           <label class="sr-only" for="documentType">Tipo de arquivo</label>
           <select id="documentType" class="controle documents-tipo">
             <option value="all">Todos os tipos</option>
-            <option value="folder">Pastas</option>
             <option value="pdf">PDF</option>
             <option value="doc">Documentos</option>
             <option value="sheet">Planilhas</option>
+            <option value="slide">Apresentações</option>
+            <option value="imagem">Imagens</option>
           </select>
         </div>
 
         <div class="documents-summary">
           <span id="counter">0 itens encontrados</span>
-          <button id="selectAll" class="clear-filters" type="button">Selecionar todos</button>
+          
+          <div class="documents-acoes-pasta" id="acoesDaPasta" hidden>
+            <button id="renomearPasta" class="clear-filters" type="button">Renomear pasta</button>
+            <button id="excluirPasta" class="clear-filters" type="button">Excluir pasta</button>
+          </div>
         </div>
 
         <div class="documents-grid" id="documentsGrid">

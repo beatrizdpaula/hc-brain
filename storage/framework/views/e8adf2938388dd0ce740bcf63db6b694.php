@@ -12,6 +12,10 @@
           quanto já foi entregue.
         </p>
       </div>
+
+      <div class="page-header-actions">
+        <button class="primary" id="novoProjeto" type="button">Novo projeto</button>
+      </div>
     </div>
 
     <div class="projetos-kpis" id="projetosKpis"></div>

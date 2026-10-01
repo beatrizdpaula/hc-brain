@@ -17,6 +17,10 @@
         financeiro e a Sofia.
       </p>
 
+      <?php if(session('status')): ?>
+        <div class="login-aviso" role="status"><?php echo e(session('status')); ?></div>
+      <?php endif; ?>
+
       <form id="loginForm" method="POST" action="<?php echo e(route('login')); ?>">
         <?php echo csrf_field(); ?>
 
@@ -51,9 +55,9 @@
                    <?php if(old('remember', $emailLembrado !== null)): echo 'checked'; endif; ?> />
             <span>Lembrar meu acesso</span>
           </label>
-          <button type="button" class="login-link" id="forgotLogin">
+          <a class="login-link" href="<?php echo e(route('senha.solicitar')); ?>">
             Esqueci minha senha
-          </button>
+          </a>
         </div>
 
         <button class="login-submit" type="submit">Entrar no HC Brain</button>
@@ -76,11 +80,6 @@ endif;
 unset($__errorArgs, $__bag); ?>
         </div>
       </form>
-
-      <div class="login-demo">
-        Protótipo demonstrativo • testes: beatriz@healthcare.com.br / 123456 ·
-        matheus@healthcare.com.br / 123456
-      </div>
     </div>
   </div>
 <?php $__env->stopSection(); ?>
