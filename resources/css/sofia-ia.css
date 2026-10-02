@@ -524,8 +524,14 @@
     place-items: center;
 }
 
-.sofia-copiar {
+.message-acoes {
+    display: flex;
+    gap: var(--esp-1);
     margin-top: var(--esp-2);
+}
+
+.sofia-copiar,
+.sofia-ouvir {
     padding: 0 var(--esp-2);
     border: none;
     border-radius: var(--raio-sm);
@@ -536,14 +542,22 @@
 }
 
 .message.bot:hover .sofia-copiar,
+.message.bot:hover .sofia-ouvir,
 .message.bot:focus-within .sofia-copiar,
-.sofia-copiar.copiado {
+.message.bot:focus-within .sofia-ouvir,
+.sofia-copiar.copiado,
+.sofia-ouvir.falando {
     opacity: 1;
 }
 
-.sofia-copiar:hover {
+.sofia-copiar:hover,
+.sofia-ouvir:hover {
     color: var(--texto-forte);
     background: var(--surface-hover);
+}
+
+.sofia-ouvir.falando {
+    color: var(--roxo-claro);
 }
 
 /* --------------------------------------------------------------------------
@@ -600,7 +614,8 @@
     color: var(--texto-forte);
 }
 
-.sofia-mic-wrap {
+.sofia-mic-wrap,
+.sofia-voz-wrap {
     display: flex;
     flex-shrink: 0;
 }
@@ -608,14 +623,22 @@
 /*
   Navegador sem reconhecimento de voz e servidor sem transcrição: o microfone
   fica desabilitado e deixa o clique passar para o invólucro, que explica o
-  caminho — digitar, ou abrir a Sofia no Chrome ou no Edge.
+  caminho — digitar, ou abrir a Sofia no Chrome ou no Edge. A conversa por voz
+  usa o mesmo arranjo, porque depende do reconhecimento.
 */
-.sofia-mic-wrap.sem-voz {
+.sofia-mic-wrap.sem-voz,
+.sofia-voz-wrap.sem-voz {
     cursor: not-allowed;
 }
 
-.sofia-mic-wrap.sem-voz .sofia-mic {
+.sofia-mic-wrap.sem-voz .sofia-mic,
+.sofia-voz-wrap.sem-voz .sofia-voz-btn {
     pointer-events: none;
+}
+
+.sofia-voz-btn.ativa {
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
 }
 
 .chat-form textarea {
@@ -709,16 +732,18 @@
 
 .sofia-coluna.gravando .sofia-pill,
 .sofia-coluna.gravando .sofia-attachment,
-.sofia-coluna.gravando .sofia-suggestions {
+.sofia-coluna.gravando .sofia-suggestions,
+.sofia-coluna.em-voz .sofia-suggestions {
     display: none;
 }
 
-.sofia-gravacao {
+.sofia-gravacao,
+.sofia-voz-painel {
     display: flex;
     flex-direction: column;
-    gap: var(--esp-3);
+    gap: var(--esp-2);
     min-height: 52px;
-    padding: var(--esp-4);
+    padding: var(--esp-3) var(--esp-3) var(--esp-3) var(--esp-2);
     border: 1px solid var(--roxo);
     border-radius: 26px;
     background: var(--surface-alto);
@@ -727,13 +752,21 @@
         var(--sombra-md);
 }
 
-.sofia-gravacao-topo {
+.sofia-gravacao[hidden],
+.sofia-voz-painel[hidden] {
+    display: none;
+}
+
+/* A linha repete o compositor: cancelar à esquerda, onda no meio, ações à
+   direita — assim a troca entre pílula e gravação não desloca a tela. */
+.sofia-gravacao-linha {
     display: flex;
     align-items: center;
-    gap: var(--esp-3);
+    gap: var(--esp-2);
 }
 
 .sofia-gravacao-pulso {
+    flex-shrink: 0;
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -742,61 +775,114 @@
     animation: sofia-gravando 1.4s ease-out infinite;
 }
 
-.sofia-gravacao-topo strong {
+.sofia-gravacao-estado {
+    flex-shrink: 0;
     color: var(--texto-forte);
-    font-size: var(--texto-md);
+    font-size: var(--texto-sm);
     font-weight: var(--peso-medio);
 }
 
-.sofia-gravacao-topo span {
-    margin-left: auto;
+.sofia-gravacao-tempo {
+    flex-shrink: 0;
     color: var(--texto-suave);
     font-size: var(--texto-sm);
     font-variant-numeric: tabular-nums;
 }
 
+.sofia-onda {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 40px;
+    height: 24px;
+}
+
+.sofia-onda i {
+    width: 3px;
+    height: 30%;
+    border-radius: var(--raio-pill);
+    background: var(--roxo-claro);
+    animation: sofia-onda 1.1s ease-in-out infinite;
+}
+
+.sofia-onda i:nth-child(2n) {
+    animation-delay: 0.12s;
+}
+
+.sofia-onda i:nth-child(3n) {
+    animation-delay: 0.26s;
+}
+
+.sofia-onda i:nth-child(5n) {
+    animation-delay: 0.4s;
+}
+
 .sofia-gravacao-parcial {
     min-height: 1.5em;
+    padding: 0 var(--esp-2);
     color: var(--texto);
     font-size: var(--texto-md);
     line-height: var(--altura-solta);
 }
 
-.sofia-gravacao-acoes {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--esp-2);
-}
-
-.sofia-gravacao-cancelar,
-.sofia-gravacao-enviar {
-    height: 34px;
-    padding: 0 var(--esp-4);
-    border-radius: var(--raio-pill);
-    font-size: var(--texto-sm);
-    font-weight: var(--peso-medio);
-}
-
-.sofia-gravacao-cancelar {
+.sofia-gravacao-botao {
+    display: grid;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
     border: 1px solid var(--border-forte);
+    border-radius: 50%;
     background: transparent;
     color: var(--texto);
+    place-items: center;
+    transition: var(--transicao);
 }
 
-.sofia-gravacao-cancelar:hover {
+.sofia-gravacao-botao svg {
+    width: 16px;
+    height: 16px;
+}
+
+.sofia-gravacao-botao:hover {
     background: var(--surface-hover);
     color: var(--texto-forte);
 }
 
 .sofia-gravacao-enviar {
+    display: grid;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
     border: none;
+    border-radius: 50%;
     background: var(--roxo);
     color: #fff;
+    place-items: center;
+    transition: var(--transicao);
+}
+
+.sofia-gravacao-enviar svg {
+    width: 17px;
+    height: 17px;
 }
 
 .sofia-gravacao-enviar:hover {
     background: var(--roxo-claro);
     color: #10131c;
+}
+
+/* Pensando: nada se move, para a espera não parecer escuta. */
+.sofia-voz-painel[data-estado="pensando"] .sofia-gravacao-pulso,
+.sofia-voz-painel[data-estado="pensando"] .sofia-onda i {
+    animation: none;
+}
+
+.sofia-voz-painel[data-estado="pensando"] .sofia-gravacao-pulso,
+.sofia-voz-painel[data-estado="falando"] .sofia-gravacao-pulso {
+    background: var(--roxo-claro);
+    box-shadow: none;
 }
 
 .sofia-dica {
@@ -832,10 +918,27 @@
     }
 }
 
+@keyframes sofia-onda {
+    0%,
+    100% {
+        height: 25%;
+    }
+
+    50% {
+        height: 100%;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .sofia-gravacao-pulso,
-    .sofia-digitando i {
+    .sofia-digitando i,
+    .sofia-onda i {
         animation: none;
+    }
+
+    /* Sem animação a onda vira uma régua: ainda marca que o áudio está ativo. */
+    .sofia-onda i {
+        height: 55%;
     }
 }
 
@@ -913,8 +1016,15 @@
     }
 
     .sofia-conversa-apagar,
-    .sofia-copiar {
+    .sofia-copiar,
+    .sofia-ouvir {
         opacity: 1;
+    }
+
+    /* Na gravação o pulso e o tempo já contam o que está havendo; na conversa
+       por voz o rótulo é a única pista do estado, então ele fica. */
+    .sofia-gravacao .sofia-gravacao-estado {
+        display: none;
     }
 
     .sofia-coluna {

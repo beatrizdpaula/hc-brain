@@ -4,11 +4,19 @@
    lateral, um chat novo começa em branco e a conversa aberta
    continua no navegador — inclusive em outra aba.
 
-   O microfone grava a pergunta. Se o navegador reconhece voz, o
-   texto segue direto. Se não, o áudio vai para o servidor e volta
-   transcrito. Quando não há nenhum dos dois caminhos, a tela nem
-   oferece o áudio: o microfone fica desabilitado e explica o que
-   fazer, em vez de falhar depois do clique.
+   O microfone dita a pergunta. Se o navegador reconhece voz, o
+   texto cai no campo quando o ditado para, dá para editar e
+   retomar de onde ficou. Se não reconhece, o áudio vai para o
+   servidor e volta transcrito. Quando não há nenhum dos dois
+   caminhos, a tela nem oferece o áudio: o microfone fica
+   desabilitado e explica o que fazer, em vez de falhar depois do
+   clique.
+
+   A conversa por voz é o ditado em ciclo: ouvir, perguntar, falar
+   a resposta em voz alta e voltar a ouvir. Ouvir a resposta usa
+   só a síntese de fala, que existe em todo navegador moderno —
+   por isso o botão "Ouvir" das respostas funciona mesmo onde o
+   reconhecimento não existe.
    ========================================================= */
 
 import { ErroDeApi } from "../comum/api.ts";
@@ -21,7 +29,7 @@ import {
     type ConversaSofia,
     type MensagemSofia,
 } from "../dados/sofia.ts";
-import { alvoMaisProximo, campo, dado, porId, todos } from "../comum/dom.ts";
+import { alvoMaisProximo, campo, dado, porId, talvez, todos } from "../comum/dom.ts";
 import {
     atualizarSecao,
     observarEstado,
@@ -69,7 +77,13 @@ type ConstrutorDeReconhecimento = new () => ReconhecimentoDeVoz;
 
 type ModoGravacao = "fala" | "arquivo";
 
+/** Os três momentos do ciclo da conversa por voz. */
+type EstadoDeVoz = "ouvindo" | "pensando" | "falando";
+
 const LIMITE_GRAVACAO_MS = 120_000;
+
+/** Silêncios seguidos antes de sair sozinha da conversa por voz. */
+const LIMITE_DE_SILENCIOS = 3;
 
 const usuario = iniciarPagina("sofia-ia");
 
@@ -98,6 +112,14 @@ const gravacao = porId("sofiaGravacao");
 const gravacaoEstado = porId("sofiaGravacaoEstado");
 const gravacaoTempo = porId("sofiaGravacaoTempo");
 const gravacaoParcial = porId("sofiaGravacaoParcial");
+const gravacaoParar = porId<HTMLButtonElement>("sofiaGravacaoParar");
+const gravacaoEnviar = porId<HTMLButtonElement>("sofiaGravacaoEnviar");
+const vozWrap = porId("sofiaVozWrap");
+const vozBtn = porId<HTMLButtonElement>("sofiaVozBtn");
+const vozPainel = porId("sofiaVozPainel");
+const vozEstado = porId("sofiaVozEstado");
+const vozParcial = porId("sofiaVozParcial");
+const vozInterromper = porId<HTMLButtonElement>("sofiaVozInterromper");
 const dicaVoz = porId("sofiaDicaVoz");
 const aviso = porId("sofiaAviso");
 
@@ -107,9 +129,18 @@ const transcricaoNoServidor = dado(tela, "transcricaoServidor") === "1";
 const ditadoNoNavegador = reconhecimentoDisponivel() !== null;
 const audioDisponivel = ditadoNoNavegador || transcricaoNoServidor;
 
+/* A síntese de fala é independente do reconhecimento: o Firefox não ouve,
+   mas fala — então "Ouvir" continua lá mesmo sem ditado. */
+const sinteseDeVoz: SpeechSynthesis | null =
+    typeof window.speechSynthesis === "undefined" ? null : window.speechSynthesis;
+
 const SEM_VOZ =
     "Este navegador não reconhece voz. Abra a Sofia no Chrome ou no Edge para " +
     "falar a pergunta, ou escreva aqui mesmo.";
+
+const SEM_CONVERSA_POR_VOZ =
+    "A conversa por voz precisa do reconhecimento de fala do navegador. Abra a " +
+    "Sofia no Chrome ou no Edge, ou escreva a pergunta.";
 
 porId("sofiaUsuarioAvatar").textContent = usuario.iniciais;
 porId("sofiaUsuarioNome").textContent = usuario.nome;
@@ -136,10 +167,25 @@ let streamMic: MediaStream | null = null;
 let pedacos: Blob[] = [];
 let cancelouGravacao = false;
 let paradaPedida = false;
+/** Parada que só encerra a escuta: o texto vai para o campo, sem enviar. */
+let pausaParaEditar = false;
 let timerGravacao: number | null = null;
 let inicioGravacao = 0;
 let transcricaoFinal = "";
 let transcricaoParcial = "";
+
+let conversaPorVoz = false;
+let reconhecimentoDaConversa: ReconhecimentoDeVoz | null = null;
+let silenciosSeguidos = 0;
+
+/** Voz em português escolhida para a Sofia, quando o sistema tem uma. */
+let vozDaSofia: SpeechSynthesisVoice | null = null;
+
+/** Encerra a espera da fala em curso, inclusive quando ela é interrompida. */
+let encerrarFalaAtual: (() => void) | null = null;
+
+/** Índice da mensagem que está sendo lida em voz alta. */
+let mensagemFalando: number | null = null;
 
 function novoId(): string {
     return crypto.randomUUID();
@@ -175,7 +221,12 @@ function atualizarEnvio(): void {
         esperandoResposta() ||
         modoGravacao !== null ||
         (entrada.value.trim() === "" && audioAnexado === null);
-    micBtn.disabled = !audioDisponivel || esperandoResposta();
+    micBtn.disabled = !audioDisponivel || esperandoResposta() || conversaPorVoz;
+    /* Em conversa por voz o botão continua ativo mesmo enquanto a Sofia pensa:
+       é por ele que se sai do modo. */
+    vozBtn.disabled =
+        !conversaPorVoz &&
+        (!ditadoNoNavegador || esperandoResposta() || modoGravacao !== null);
 }
 
 function mostrarAviso(texto: string): void {
@@ -194,6 +245,80 @@ function limparAnexo(): void {
     anexo.classList.remove("show");
     anexoNome.textContent = "";
     atualizarEnvio();
+}
+
+/**
+ * `getVoices()` costuma devolver uma lista vazia na primeira chamada, porque o
+ * sistema ainda está carregando as vozes — o evento avisa quando elas chegam.
+ */
+function escolherVozPortuguesa(): void {
+    if (!sinteseDeVoz) return;
+    const vozes = sinteseDeVoz.getVoices();
+    vozDaSofia =
+        vozes.find((voz) => /^pt[-_]br$/i.test(voz.lang)) ??
+        vozes.find((voz) => /^pt/i.test(voz.lang)) ??
+        null;
+}
+
+/** Fala o texto e resolve quando termina — ou quando alguém interrompe. */
+function falar(texto: string): Promise<void> {
+    const limpo = texto.trim();
+    if (!sinteseDeVoz || !limpo) return Promise.resolve();
+
+    return new Promise((resolver) => {
+        const concluir = (): void => {
+            if (encerrarFalaAtual === concluir) encerrarFalaAtual = null;
+            resolver();
+        };
+        encerrarFalaAtual = concluir;
+
+        const fala = new SpeechSynthesisUtterance(limpo);
+        fala.lang = vozDaSofia?.lang ?? "pt-BR";
+        if (vozDaSofia) fala.voice = vozDaSofia;
+        fala.onend = concluir;
+        fala.onerror = concluir;
+
+        sinteseDeVoz.cancel();
+        sinteseDeVoz.speak(fala);
+    });
+}
+
+function marcarLeitura(botao: HTMLButtonElement, falando: boolean): void {
+    botao.textContent = falando ? "Parar" : "Ouvir";
+    botao.setAttribute("aria-pressed", falando ? "true" : "false");
+    botao.classList.toggle("falando", falando);
+}
+
+/**
+ * Cala a Sofia agora. Resolve a espera na mão porque nem todo navegador
+ * dispara `end` na fala que foi cancelada.
+ */
+function pararFala(): void {
+    const concluir = encerrarFalaAtual;
+    encerrarFalaAtual = null;
+    mensagemFalando = null;
+    sinteseDeVoz?.cancel();
+    concluir?.();
+    todos<HTMLButtonElement>("[data-ouvir]", chat).forEach((botao) => {
+        marcarLeitura(botao, false);
+    });
+}
+
+async function alternarLeitura(botao: HTMLButtonElement): Promise<void> {
+    const indice = Number(dado(botao, "ouvir"));
+    const estavaFalando = mensagemFalando === indice;
+    pararFala();
+    if (estavaFalando) return;
+
+    const texto = conversaAberta()?.mensagens[indice]?.texto ?? "";
+    if (!texto) return;
+
+    mensagemFalando = indice;
+    marcarLeitura(botao, true);
+    await falar(texto);
+    if (mensagemFalando !== indice) return;
+    mensagemFalando = null;
+    marcarLeitura(botao, false);
 }
 
 function mensagemDe(autor: AutorMensagem, texto: string, voz: boolean): MensagemSofia {
@@ -216,12 +341,19 @@ function htmlMensagem(mensagem: MensagemSofia, indice: number): string {
         return `<div class="message user"><div class="message-texto">${escapar(mensagem.texto)}</div></div>`;
     }
 
+    const ouvir = sinteseDeVoz
+        ? `<button type="button" class="sofia-ouvir" data-ouvir="${indice}" aria-pressed="false">Ouvir</button>`
+        : "";
+
     return `
       <div class="message bot">
         <span class="sofia-avatar" aria-hidden="true">S</span>
         <div class="message-corpo">
           <div class="message-texto">${escapar(mensagem.texto)}</div>
-          <button type="button" class="sofia-copiar" data-copiar="${indice}">Copiar</button>
+          <div class="message-acoes">
+            <button type="button" class="sofia-copiar" data-copiar="${indice}">Copiar</button>
+            ${ouvir}
+          </div>
         </div>
       </div>
     `;
@@ -253,6 +385,15 @@ function renderConversa(): void {
             : "");
 
     desenharIcones(chat);
+    /* O HTML foi refeito: o botão da mensagem que está sendo lida precisa
+       voltar a mostrar "Parar", senão o clique seguinte recomeçaria a leitura. */
+    if (mensagemFalando !== null) {
+        const botao = talvez<HTMLButtonElement>(
+            `[data-ouvir="${mensagemFalando}"]`,
+            chat,
+        );
+        if (botao) marcarLeitura(botao, true);
+    }
     chat.classList.toggle("active", conversando);
     coluna.classList.toggle("em-conversa", conversando);
     coluna.classList.toggle("enviando-audio", transcrevendo);
@@ -370,16 +511,26 @@ function registrarPergunta(texto: string, voz = false): string {
     return id;
 }
 
-async function perguntar(pergunta: string, voz = false): Promise<void> {
-    const texto = pergunta.trim();
+function podePerguntar(pergunta: string): boolean {
     const aberta = conversaAberta();
-    if (!texto || (aberta !== null && aguardando.has(aberta.id)) || modoGravacao) return;
+    return (
+        pergunta.trim() !== "" &&
+        !(aberta !== null && aguardando.has(aberta.id)) &&
+        !modoGravacao
+    );
+}
+
+/**
+ * Registra a pergunta, consulta a base e devolve a resposta — a conversa por
+ * voz precisa do texto de volta para ler em voz alta.
+ */
+async function enviarPergunta(pergunta: string, voz: boolean): Promise<string | null> {
+    const texto = pergunta.trim();
+    if (!podePerguntar(texto)) return null;
 
     limparAviso();
     const id = registrarPergunta(texto, voz);
     aguardando.add(id);
-    entrada.value = "";
-    ajustarCampo();
     renderConversa();
 
     let resposta: string;
@@ -390,8 +541,16 @@ async function perguntar(pergunta: string, voz = false): Promise<void> {
     }
 
     aguardando.delete(id);
-    if (!conversaAindaExiste(id)) return;
+    if (!conversaAindaExiste(id)) return null;
     anexar(id, "bot", resposta);
+    return resposta;
+}
+
+async function perguntar(pergunta: string, voz = false): Promise<void> {
+    if (!podePerguntar(pergunta)) return;
+    entrada.value = "";
+    ajustarCampo();
+    await enviarPergunta(pergunta, voz);
 }
 
 async function enviarBlob(arquivo: Blob, nome: string): Promise<void> {
@@ -454,7 +613,9 @@ async function enviarBlob(arquivo: Blob, nome: string): Promise<void> {
 }
 
 function novoChat(): void {
+    sairDaConversaPorVoz();
     cancelarGravacao();
+    pararFala();
     limparAnexo();
     limparAviso();
     if (obterSecao("sofia").conversaAtiva !== null) {
@@ -468,7 +629,9 @@ function novoChat(): void {
 }
 
 function abrirConversa(id: string): void {
+    sairDaConversaPorVoz();
     cancelarGravacao();
+    pararFala();
     limparAviso();
     atualizarSecao("sofia", { conversaAtiva: id });
     fecharHistorico();
@@ -551,22 +714,32 @@ function pararStream(): void {
 function abrirPainel(aoVivo: boolean): void {
     coluna.classList.add("gravando");
     gravacao.hidden = false;
-    gravacaoEstado.textContent = "Ouvindo…";
+    /* Parar para editar só faz sentido no ditado: no caminho do servidor o
+       texto só existe depois do envio. */
+    gravacaoParar.hidden = !aoVivo;
+    gravacaoEstado.textContent = aoVivo ? "Ouvindo…" : "Gravando…";
     gravacaoTempo.textContent = "0:00";
     gravacaoParcial.textContent = aoVivo
         ? "Fale sua pergunta."
         : "Gravando. O áudio será transcrito quando você enviar.";
     micBtn.setAttribute("aria-pressed", "true");
-    micBtn.setAttribute("aria-label", "Parar gravação e enviar");
+    micBtn.setAttribute(
+        "aria-label",
+        aoVivo ? "Pausar o ditado e editar o texto" : "Parar gravação e enviar",
+    );
     inicioGravacao = Date.now();
     if (timerGravacao !== null) window.clearInterval(timerGravacao);
     timerGravacao = window.setInterval(() => {
         const segundos = Math.floor((Date.now() - inicioGravacao) / 1000);
         gravacaoTempo.textContent = formatarTempo(segundos);
-        if (Date.now() - inicioGravacao >= LIMITE_GRAVACAO_MS) pararEEnviar();
+        /* No limite o ditado pausa em vez de enviar: a pergunta não sai sem a
+           pessoa ver o que foi entendido. */
+        if (Date.now() - inicioGravacao < LIMITE_GRAVACAO_MS) return;
+        if (aoVivo) pausarDitado();
+        else pararEEnviar();
     }, 250);
     atualizarEnvio();
-    porId("sofiaGravacaoEnviar").focus();
+    (aoVivo ? gravacaoParar : gravacaoEnviar).focus();
 }
 
 function encerrarPainel(): void {
@@ -578,6 +751,7 @@ function encerrarPainel(): void {
     gravador = null;
     modoGravacao = null;
     paradaPedida = false;
+    pausaParaEditar = false;
     pararStream();
     gravacao.hidden = true;
     coluna.classList.remove("gravando");
@@ -588,6 +762,20 @@ function encerrarPainel(): void {
 
 function textoOuvido(): string {
     return `${transcricaoFinal} ${transcricaoParcial}`.replace(/\s+/g, " ").trim();
+}
+
+/** Retomar o ditado soma ao que já está escrito, em vez de trocar o campo. */
+function juntarTextos(anterior: string, novo: string): string {
+    const base = anterior.replace(/\s+$/, "");
+    if (!base) return novo;
+    if (!novo) return base;
+    return `${base} ${novo}`;
+}
+
+function focarFimDoCampo(): void {
+    entrada.focus();
+    const fim = entrada.value.length;
+    entrada.setSelectionRange(fim, fim);
 }
 
 function pararEEnviar(): void {
@@ -603,6 +791,15 @@ function pararEEnviar(): void {
     if (gravador && gravador.state !== "inactive") {
         gravador.stop();
     }
+}
+
+/** Encerra a escuta e devolve o texto ao campo, sem enviar nada. */
+function pausarDitado(): void {
+    if (modoGravacao !== "fala" || paradaPedida) return;
+    paradaPedida = true;
+    pausaParaEditar = true;
+    cancelouGravacao = false;
+    reconhecimentoAtivo?.stop();
 }
 
 function cancelarGravacao(): void {
@@ -685,14 +882,32 @@ function iniciarReconhecimento(Construtor: ConstrutorDeReconhecimento): void {
         if (modoGravacao !== "fala") return;
         const ouvido = textoOuvido();
         const cancelou = cancelouGravacao;
+        const paraEditar = pausaParaEditar;
         encerrarPainel();
-        entrada.focus();
-        if (cancelou) return;
+
+        /* Cancelar não encosta no campo: o que já estava escrito continua lá. */
+        if (cancelou) {
+            focarFimDoCampo();
+            return;
+        }
+
         if (!ouvido) {
+            focarFimDoCampo();
             mostrarAviso("Não ouvi nada. Fale de novo ou escreva a pergunta.");
             return;
         }
-        void perguntar(ouvido, true);
+
+        const texto = juntarTextos(entrada.value, ouvido);
+
+        if (paraEditar) {
+            entrada.value = texto;
+            ajustarCampo();
+            atualizarEnvio();
+            focarFimDoCampo();
+            return;
+        }
+
+        void perguntar(texto, true);
     };
 
     reconhecimentoAtivo = reconhecimento;
@@ -784,6 +999,162 @@ function explicarSemVoz(): void {
     entrada.focus();
 }
 
+function explicarSemConversaPorVoz(): void {
+    mostrarAviso(audioDisponivel ? SEM_CONVERSA_POR_VOZ : SEM_VOZ);
+    entrada.focus();
+}
+
+function definirEstadoDeVoz(estado: EstadoDeVoz): void {
+    vozPainel.dataset.estado = estado;
+    vozEstado.textContent =
+        estado === "ouvindo"
+            ? "Ouvindo você…"
+            : estado === "pensando"
+              ? "Pensando na resposta…"
+              : "Sofia falando…";
+    vozInterromper.hidden = estado !== "falando";
+}
+
+function sairDaConversaPorVoz(): void {
+    if (!conversaPorVoz) return;
+
+    /* A bandeira cai antes de tudo: é ela que faz o ciclo parar quando a
+       escuta e a fala em andamento forem encerradas logo abaixo. */
+    conversaPorVoz = false;
+    reconhecimentoDaConversa?.abort();
+    reconhecimentoDaConversa = null;
+    pararFala();
+
+    vozPainel.hidden = true;
+    vozInterromper.hidden = true;
+    coluna.classList.remove("em-voz");
+    vozBtn.classList.remove("ativa");
+    vozBtn.setAttribute("aria-pressed", "false");
+    vozBtn.setAttribute("aria-label", "Iniciar conversa por voz");
+    vozBtn.title = "Iniciar conversa por voz";
+    atualizarEnvio();
+}
+
+/**
+ * Um turno de escuta. Devolve a pergunta ouvida, texto vazio quando foi só
+ * silêncio, ou `null` quando deu erro — e aí a conversa por voz já saiu.
+ */
+function ouvirTurnoDeVoz(Construtor: ConstrutorDeReconhecimento): Promise<string | null> {
+    return new Promise((resolver) => {
+        const reconhecimento = new Construtor();
+        reconhecimento.lang = "pt-BR";
+        /* Sem `continuous`, o reconhecimento termina sozinho na pausa da fala —
+           é o que marca o fim da pergunta sem precisar de nenhum botão. */
+        reconhecimento.continuous = false;
+        reconhecimento.interimResults = true;
+
+        let ouvido = "";
+        let falha: string | null = null;
+
+        reconhecimento.onresult = (evento) => {
+            let parcial = "";
+            for (
+                let indice = evento.resultIndex;
+                indice < evento.results.length;
+                indice += 1
+            ) {
+                const resultado = evento.results[indice];
+                const trecho = resultado?.[0]?.transcript ?? "";
+                if (resultado?.isFinal) ouvido = `${ouvido} ${trecho}`;
+                else parcial = trecho;
+            }
+            const texto = `${ouvido} ${parcial}`.replace(/\s+/g, " ").trim();
+            vozParcial.textContent = texto || "Fale sua pergunta.";
+        };
+
+        reconhecimento.onerror = (evento) => {
+            falha = avisoDoReconhecimento(evento.error);
+        };
+
+        reconhecimento.onend = () => {
+            reconhecimentoDaConversa = null;
+            if (falha) {
+                mostrarAviso(falha);
+                sairDaConversaPorVoz();
+                resolver(null);
+                return;
+            }
+            resolver(ouvido.replace(/\s+/g, " ").trim());
+        };
+
+        reconhecimentoDaConversa = reconhecimento;
+
+        try {
+            reconhecimento.start();
+        } catch {
+            reconhecimentoDaConversa = null;
+            mostrarAviso("Não consegui começar a conversa por voz. Tente de novo.");
+            sairDaConversaPorVoz();
+            resolver(null);
+        }
+    });
+}
+
+/** Ouvir, perguntar, falar a resposta, ouvir de novo — até alguém sair. */
+async function rodarConversaPorVoz(
+    Construtor: ConstrutorDeReconhecimento,
+): Promise<void> {
+    while (conversaPorVoz) {
+        definirEstadoDeVoz("ouvindo");
+        vozParcial.textContent = "Fale sua pergunta.";
+
+        const pergunta = await ouvirTurnoDeVoz(Construtor);
+        if (!conversaPorVoz || pergunta === null) return;
+
+        if (!pergunta) {
+            silenciosSeguidos += 1;
+            if (silenciosSeguidos < LIMITE_DE_SILENCIOS) continue;
+            mostrarAviso(
+                "Não ouvi nada. Comece a conversa por voz de novo quando quiser falar.",
+            );
+            sairDaConversaPorVoz();
+            return;
+        }
+
+        silenciosSeguidos = 0;
+        definirEstadoDeVoz("pensando");
+        vozParcial.textContent = pergunta;
+
+        const resposta = await enviarPergunta(pergunta, true);
+        if (!conversaPorVoz) return;
+        if (resposta === null) continue;
+
+        /* A resposta inteira já está na conversa; repeti-la aqui empurraria o
+           chat para fora da tela bem na hora de ler. */
+        definirEstadoDeVoz("falando");
+        vozParcial.textContent = "A resposta está na conversa. Interrompa quando quiser.";
+        await falar(resposta);
+    }
+}
+
+function entrarNaConversaPorVoz(): void {
+    if (conversaPorVoz || modoGravacao || esperandoResposta()) return;
+
+    const Construtor = reconhecimentoDisponivel();
+    if (!Construtor) {
+        explicarSemConversaPorVoz();
+        return;
+    }
+
+    limparAviso();
+    pararFala();
+    conversaPorVoz = true;
+    silenciosSeguidos = 0;
+    vozPainel.hidden = false;
+    coluna.classList.add("em-voz");
+    vozBtn.classList.add("ativa");
+    vozBtn.setAttribute("aria-pressed", "true");
+    vozBtn.setAttribute("aria-label", "Sair da conversa por voz");
+    vozBtn.title = "Sair da conversa por voz";
+    atualizarEnvio();
+    void rodarConversaPorVoz(Construtor);
+}
+
 function iniciarGravacao(): void {
     if (modoGravacao || esperandoResposta()) return;
 
@@ -806,7 +1177,9 @@ function iniciarGravacao(): void {
 /**
  * O que a tela oferece depende do que existe de verdade: sem reconhecimento
  * no navegador e sem transcrição no servidor, o microfone fica desabilitado
- * e o anexo some — nenhum áudio chega a sair daqui.
+ * e o anexo some — nenhum áudio chega a sair daqui. A conversa por voz é mais
+ * exigente: ela depende do reconhecimento, que a transcrição no servidor não
+ * substitui, porque ninguém fica apertando botão numa conversa sem as mãos.
  */
 function prepararEntradaDeVoz(): void {
     anexarBtn.hidden = !transcricaoNoServidor;
@@ -815,6 +1188,20 @@ function prepararEntradaDeVoz(): void {
         boasVindasTexto.textContent = audioDisponivel
             ? "Pergunte por texto ou grave um áudio. A Sofia responde com empresas, reuniões, documentos, projetos e processos da HC."
             : "Pergunte por texto. A Sofia responde com empresas, reuniões, documentos, projetos e processos da HC.";
+    }
+
+    if (!ditadoNoNavegador) {
+        const explicacao = audioDisponivel ? SEM_CONVERSA_POR_VOZ : SEM_VOZ;
+        vozWrap.classList.add("sem-voz");
+        vozBtn.setAttribute("aria-disabled", "true");
+        vozBtn.setAttribute("aria-describedby", "sofiaDicaVoz");
+        vozBtn.setAttribute(
+            "aria-label",
+            "Iniciar conversa por voz — indisponível neste navegador",
+        );
+        vozBtn.title = explicacao;
+        dicaVoz.textContent = explicacao;
+        dicaVoz.hidden = false;
     }
 
     if (audioDisponivel) return;
@@ -882,6 +1269,12 @@ porId("sofiaBuscaBtn").addEventListener("click", () => {
 buscaChats.addEventListener("input", () => renderHistorico());
 
 chat.addEventListener("click", (evento) => {
+    const leitura = alvoMaisProximo<HTMLButtonElement>(evento, "[data-ouvir]");
+    if (leitura) {
+        void alternarLeitura(leitura);
+        return;
+    }
+
     const botao = alvoMaisProximo<HTMLButtonElement>(evento, "[data-copiar]");
     if (!botao) return;
     const indice = Number(dado(botao, "copiar"));
@@ -945,7 +1338,12 @@ porId("sofiaModelBtn").addEventListener("click", () => {
     );
 });
 
+/* No ditado o microfone vira pausa: a fala para e o texto fica no campo. */
 micBtn.addEventListener("click", () => {
+    if (modoGravacao === "fala") {
+        pausarDitado();
+        return;
+    }
     if (modoGravacao) {
         pararEEnviar();
         return;
@@ -960,11 +1358,38 @@ micWrap.addEventListener("click", () => {
     explicarSemVoz();
 });
 
+vozBtn.addEventListener("click", () => {
+    if (conversaPorVoz) {
+        sairDaConversaPorVoz();
+        entrada.focus();
+        return;
+    }
+    entrarNaConversaPorVoz();
+});
+
+vozWrap.addEventListener("click", () => {
+    if (ditadoNoNavegador) return;
+    explicarSemConversaPorVoz();
+});
+
+vozInterromper.addEventListener("click", () => {
+    pararFala();
+});
+
+porId("sofiaVozSair").addEventListener("click", () => {
+    sairDaConversaPorVoz();
+    entrada.focus();
+});
+
 porId("sofiaGravacaoCancelar").addEventListener("click", () => {
     cancelarGravacao();
 });
 
-porId("sofiaGravacaoEnviar").addEventListener("click", () => {
+gravacaoParar.addEventListener("click", () => {
+    pausarDitado();
+});
+
+gravacaoEnviar.addEventListener("click", () => {
     pararEEnviar();
 });
 
@@ -973,6 +1398,12 @@ document.addEventListener("keydown", (evento) => {
     if (modoGravacao) {
         evento.preventDefault();
         cancelarGravacao();
+        return;
+    }
+    if (conversaPorVoz) {
+        evento.preventDefault();
+        sairDaConversaPorVoz();
+        entrada.focus();
         return;
     }
     if (!buscaWrap.hidden) {
@@ -984,11 +1415,29 @@ document.addEventListener("keydown", (evento) => {
     fecharHistorico();
 });
 
+/* Sair da página não pode deixar o microfone aberto nem a Sofia falando
+   sozinha: `pagehide` cobre tanto a navegação quanto o fechamento da aba. */
+window.addEventListener("pagehide", () => {
+    sairDaConversaPorVoz();
+    cancelarGravacao();
+    pararFala();
+    pararStream();
+    if (timerGravacao !== null) {
+        window.clearInterval(timerGravacao);
+        timerGravacao = null;
+    }
+});
+
 observarEstado(["sofia"], () => {
     aplicarModo(obterSecao("sofia").modo);
     renderHistorico();
     renderConversa();
 });
+
+if (sinteseDeVoz) {
+    escolherVozPortuguesa();
+    sinteseDeVoz.addEventListener("voiceschanged", escolherVozPortuguesa);
+}
 
 prepararEntradaDeVoz();
 aplicarModo(obterSecao("sofia").modo);

@@ -106,23 +106,97 @@
                   </button>
                 </div>
 
+                {{--
+                  A gravação ocupa o lugar da pílula: cancelar à esquerda, a onda e o
+                  tempo no meio, parar e enviar à direita. Parar devolve o texto ao
+                  campo para edição; só a seta envia.
+                --}}
                 <div class="sofia-gravacao" id="sofiaGravacao" hidden role="region" aria-label="Gravação de áudio">
-                  <div class="sofia-gravacao-topo">
+                  <div class="sofia-gravacao-linha">
+                    <button
+                      type="button"
+                      class="sofia-gravacao-botao"
+                      id="sofiaGravacaoCancelar"
+                      title="Cancelar gravação"
+                      aria-label="Cancelar gravação"
+                    >
+                      <i data-lucide="x"></i>
+                    </button>
+
                     <span class="sofia-gravacao-pulso" aria-hidden="true"></span>
-                    <strong id="sofiaGravacaoEstado">Ouvindo…</strong>
-                    <span id="sofiaGravacaoTempo">0:00</span>
+                    <strong class="sofia-gravacao-estado" id="sofiaGravacaoEstado">Ouvindo…</strong>
+
+                    <span class="sofia-onda" aria-hidden="true">
+                      @for ($barra = 0; $barra < 9; $barra++)
+                        <i></i>
+                      @endfor
+                    </span>
+
+                    <span class="sofia-gravacao-tempo" id="sofiaGravacaoTempo">0:00</span>
+
+                    <button
+                      type="button"
+                      class="sofia-gravacao-botao"
+                      id="sofiaGravacaoParar"
+                      title="Parar e editar o texto"
+                      aria-label="Parar e editar o texto"
+                    >
+                      <i data-lucide="square"></i>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="sofia-gravacao-enviar"
+                      id="sofiaGravacaoEnviar"
+                      title="Enviar pergunta"
+                      aria-label="Enviar pergunta"
+                    >
+                      <i data-lucide="arrow-up"></i>
+                    </button>
                   </div>
+
                   <p class="sofia-gravacao-parcial" id="sofiaGravacaoParcial" aria-live="polite">
                     Fale sua pergunta.
                   </p>
-                  <div class="sofia-gravacao-acoes">
-                    <button type="button" class="sofia-gravacao-cancelar" id="sofiaGravacaoCancelar">
-                      Cancelar
+                </div>
+
+                {{-- Conversa por voz: a Sofia ouve, responde em áudio e volta a ouvir. --}}
+                <div class="sofia-voz-painel" id="sofiaVozPainel" hidden data-estado="ouvindo" role="region" aria-label="Conversa por voz">
+                  <div class="sofia-gravacao-linha">
+                    <button
+                      type="button"
+                      class="sofia-gravacao-botao"
+                      id="sofiaVozSair"
+                      title="Sair da conversa por voz"
+                      aria-label="Sair da conversa por voz"
+                    >
+                      <i data-lucide="x"></i>
                     </button>
-                    <button type="button" class="sofia-gravacao-enviar" id="sofiaGravacaoEnviar">
-                      Enviar áudio
+
+                    <span class="sofia-gravacao-pulso" aria-hidden="true"></span>
+                    <strong class="sofia-gravacao-estado" id="sofiaVozEstado" role="status" aria-live="polite">
+                      Ouvindo você…
+                    </strong>
+
+                    <span class="sofia-onda" aria-hidden="true">
+                      @for ($barra = 0; $barra < 9; $barra++)
+                        <i></i>
+                      @endfor
+                    </span>
+
+                    <button
+                      type="button"
+                      class="sofia-gravacao-botao"
+                      id="sofiaVozInterromper"
+                      title="Interromper a Sofia"
+                      aria-label="Interromper a Sofia"
+                      hidden
+                    >
+                      <i data-lucide="square"></i>
                     </button>
                   </div>
+
+                  <p class="sofia-gravacao-parcial" id="sofiaVozParcial">Fale sua pergunta.</p>
                 </div>
 
                 <div class="sofia-pill">
@@ -155,6 +229,20 @@
                       aria-label="Gravar pergunta em áudio"
                     >
                       <i data-lucide="mic"></i>
+                    </button>
+                  </span>
+
+                  {{-- Mesmo arranjo do microfone: o invólucro explica quando o botão não pode agir. --}}
+                  <span class="sofia-voz-wrap" id="sofiaVozWrap">
+                    <button
+                      type="button"
+                      class="sofia-pill-btn sofia-voz-btn"
+                      id="sofiaVozBtn"
+                      title="Iniciar conversa por voz"
+                      aria-pressed="false"
+                      aria-label="Iniciar conversa por voz"
+                    >
+                      <i data-lucide="audio-lines"></i>
                     </button>
                   </span>
 
