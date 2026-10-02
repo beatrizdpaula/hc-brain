@@ -22,7 +22,12 @@
   </head>
 
   <body>
-    <div class="app">
+    {{--
+      A gaveta nasce fechada já no HTML. Sem a classe aqui, o estado padrão do
+      CSS é a barra aberta, e o script só a fechava depois de carregar — o que
+      fazia a barra deslizar sozinha a cada troca de tela.
+    --}}
+    <div class="app sidebar-collapsed">
       <aside class="sidebar" data-sidebar></aside>
 
       <main class="main">

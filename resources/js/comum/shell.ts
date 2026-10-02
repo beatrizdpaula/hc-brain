@@ -114,6 +114,7 @@ function montarTopbar(titulo: string, usuario: SessaoUsuario): void {
  */
 function ligarGaveta(app: HTMLElement): void {
     const main = talvez(".main", app);
+    const barra = talvez("[data-sidebar]", app);
     const gatilho = talvez("[data-abrir-menu]", app);
     const fechar = talvez("[data-fechar-menu]", app);
 
@@ -122,16 +123,29 @@ function ligarGaveta(app: HTMLElement): void {
     overlay.setAttribute("aria-hidden", "true");
     app.prepend(overlay);
 
-    function definir(aberta: boolean): void {
+    function definir(aberta: boolean, moverFoco = true): void {
         app.classList.toggle("sidebar-collapsed", !aberta);
         document.documentElement.classList.toggle("no-scroll", aberta);
         gatilho?.setAttribute("aria-expanded", String(aberta));
         gatilho?.setAttribute("aria-label", aberta ? "Fechar menu" : "Abrir menu");
         if (main) main.inert = aberta;
-        // Com a gaveta aberta o foco vai para dentro dela; ao fechar, volta
-        // para o botão que a abriu, senão o teclado fica perdido na página.
-        if (aberta) fechar?.focus();
-        else if (document.activeElement === document.body) gatilho?.focus();
+        if (!moverFoco) {
+            return;
+        }
+
+        // Com a gaveta aberta o foco vai para dentro dela. Ao fechar ele
+        // precisa sair: a barra some da árvore de foco, e quem fechou pelo X
+        // ficaria com o cursor num elemento invisível.
+        if (aberta) {
+            fechar?.focus();
+
+            return;
+        }
+
+        const foco = document.activeElement;
+        if (foco === document.body || (foco instanceof Node && barra?.contains(foco))) {
+            gatilho?.focus();
+        }
     }
 
     gatilho?.addEventListener("click", () =>
@@ -143,8 +157,11 @@ function ligarGaveta(app: HTMLElement): void {
         if (evento.key === "Escape") definir(false);
     });
 
-    // Cada página começa com a gaveta fechada, como na tela de Início.
-    definir(false);
+    // O HTML já nasce com a gaveta fechada; aqui só alinhamos ARIA e rolagem
+    // ao que a tela mostra. Sem mexer no foco: abrir a página não é o mesmo
+    // que fechar o menu, e mandar o cursor para o botão de menu a cada carga
+    // tirava o foco de quem ia direto ao conteúdo.
+    definir(false, false);
 }
 
 /**
