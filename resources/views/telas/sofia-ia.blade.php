@@ -160,45 +160,6 @@
                   </p>
                 </div>
 
-                {{-- Conversa por voz: a Sofia ouve, responde em áudio e volta a ouvir. --}}
-                <div class="sofia-voz-painel" id="sofiaVozPainel" hidden data-estado="ouvindo" role="region" aria-label="Conversa por voz">
-                  <div class="sofia-gravacao-linha">
-                    <button
-                      type="button"
-                      class="sofia-gravacao-botao"
-                      id="sofiaVozSair"
-                      title="Sair da conversa por voz"
-                      aria-label="Sair da conversa por voz"
-                    >
-                      <i data-lucide="x"></i>
-                    </button>
-
-                    <span class="sofia-gravacao-pulso" aria-hidden="true"></span>
-                    <strong class="sofia-gravacao-estado" id="sofiaVozEstado" role="status" aria-live="polite">
-                      Ouvindo você…
-                    </strong>
-
-                    <span class="sofia-onda" aria-hidden="true">
-                      @for ($barra = 0; $barra < 9; $barra++)
-                        <i></i>
-                      @endfor
-                    </span>
-
-                    <button
-                      type="button"
-                      class="sofia-gravacao-botao"
-                      id="sofiaVozInterromper"
-                      title="Interromper a Sofia"
-                      aria-label="Interromper a Sofia"
-                      hidden
-                    >
-                      <i data-lucide="square"></i>
-                    </button>
-                  </div>
-
-                  <p class="sofia-gravacao-parcial" id="sofiaVozParcial">Fale sua pergunta.</p>
-                </div>
-
                 <div class="sofia-pill">
                   <input type="file" id="sofiaFileInput" hidden multiple accept="audio/*,.webm,.mp3,.m4a,.wav,.ogg,.mpeg,.mp4" />
 
@@ -267,4 +228,55 @@
       </div>
     </div>
   </section>
+
+  {{--
+    A conversa por voz toma a tela inteira: só a esfera, o estado e a saída.
+    O script move este bloco para o fim do `body`, porque enquanto ele está
+    aberto o `main` inteiro fica inerte — e ele não pode ficar junto.
+  --}}
+  <div
+    class="sofia-voz-tela"
+    id="sofiaVozTela"
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="sofiaVozTitulo"
+  >
+    <h2 class="sr-only" id="sofiaVozTitulo">Conversa por voz com a Sofia</h2>
+
+    <button
+      type="button"
+      class="sofia-voz-fechar"
+      id="sofiaVozFechar"
+      title="Sair da conversa por voz"
+      aria-label="Sair da conversa por voz"
+    >
+      <i data-lucide="x"></i>
+    </button>
+
+    <div class="sofia-esfera" id="sofiaEsfera" data-estado="ouvindo" aria-hidden="true">
+      <span class="sofia-esfera-brilho"></span>
+      <span class="sofia-esfera-anel"></span>
+      <span class="sofia-esfera-nucleo">
+        <i></i>
+        <i></i>
+        <i></i>
+      </span>
+    </div>
+
+    <p class="sofia-voz-estado" id="sofiaVozEstado" role="status" aria-live="polite">
+      Ouvindo você…
+    </p>
+
+    <p class="sofia-voz-legenda" id="sofiaVozParcial">Fale sua pergunta.</p>
+
+    <div class="sofia-voz-acoes">
+      <button type="button" class="sofia-voz-interromper" id="sofiaVozInterromper" hidden>
+        <i data-lucide="square"></i>
+        <span>Interromper</span>
+      </button>
+
+      <button type="button" class="sofia-voz-sair" id="sofiaVozSair">Sair da conversa</button>
+    </div>
+  </div>
 @endsection

@@ -13,7 +13,9 @@
    clique.
 
    A conversa por voz é o ditado em ciclo: ouvir, perguntar, falar
-   a resposta em voz alta e voltar a ouvir. Ouvir a resposta usa
+   a resposta em voz alta e voltar a ouvir. Ela toma a tela inteira,
+   com uma esfera que se move conforme o estado — não há o que ler
+   nem onde clicar enquanto se fala. Ouvir a resposta usa
    só a síntese de fala, que existe em todo navegador moderno —
    por isso o botão "Ouvir" das respostas funciona mesmo onde o
    reconhecimento não existe.
@@ -29,7 +31,15 @@ import {
     type ConversaSofia,
     type MensagemSofia,
 } from "../dados/sofia.ts";
-import { alvoMaisProximo, campo, dado, porId, talvez, todos } from "../comum/dom.ts";
+import {
+    alvoMaisProximo,
+    campo,
+    dado,
+    porId,
+    porSeletor,
+    talvez,
+    todos,
+} from "../comum/dom.ts";
 import {
     atualizarSecao,
     observarEstado,
@@ -116,12 +126,20 @@ const gravacaoParar = porId<HTMLButtonElement>("sofiaGravacaoParar");
 const gravacaoEnviar = porId<HTMLButtonElement>("sofiaGravacaoEnviar");
 const vozWrap = porId("sofiaVozWrap");
 const vozBtn = porId<HTMLButtonElement>("sofiaVozBtn");
-const vozPainel = porId("sofiaVozPainel");
+const vozTela = porId("sofiaVozTela");
+const vozFechar = porId<HTMLButtonElement>("sofiaVozFechar");
 const vozEstado = porId("sofiaVozEstado");
 const vozParcial = porId("sofiaVozParcial");
 const vozInterromper = porId<HTMLButtonElement>("sofiaVozInterromper");
+const esfera = porId("sofiaEsfera");
 const dicaVoz = porId("sofiaDicaVoz");
 const aviso = porId("sofiaAviso");
+const principal = porSeletor(".main");
+const barraLateral = talvez("[data-sidebar]");
+
+/* A conversa por voz cobre a tela inteira e deixa o `main` inerte. Para não
+   ficar inerte junto com ele, o bloco sobe para o fim do `body`. */
+document.body.append(vozTela);
 
 /* Os dois caminhos do áudio, decididos antes do primeiro clique: ditar no
    próprio navegador, ou mandar o arquivo para o servidor transcrever. */
@@ -177,6 +195,15 @@ let transcricaoParcial = "";
 let conversaPorVoz = false;
 let reconhecimentoDaConversa: ReconhecimentoDeVoz | null = null;
 let silenciosSeguidos = 0;
+
+/* A esfera: o nível vem do microfone enquanto ela ouve, e de uma onda
+   aproximada enquanto a Sofia fala. */
+let contextoDeAudio: AudioContext | null = null;
+let analisador: AnalyserNode | null = null;
+let amostras: Uint8Array<ArrayBuffer> | null = null;
+let streamDaEsfera: MediaStream | null = null;
+let quadroDaEsfera: number | null = null;
+let inicioDaFala = 0;
 
 /** Voz em português escolhida para a Sofia, quando o sistema tem uma. */
 let vozDaSofia: SpeechSynthesisVoice | null = null;
@@ -1004,8 +1031,101 @@ function explicarSemConversaPorVoz(): void {
     entrada.focus();
 }
 
+function movimentoReduzido(): boolean {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * Nível 0–1 do que entra pelo microfone, para a esfera acompanhar a voz.
+ */
+function nivelDoMicrofone(): number {
+    if (!analisador || !amostras) return 0;
+
+    analisador.getByteTimeDomainData(amostras);
+    let soma = 0;
+    for (let indice = 0; indice < amostras.length; indice += 1) {
+        const desvio = ((amostras[indice] ?? 128) - 128) / 128;
+        soma += desvio * desvio;
+    }
+
+    return Math.min(1, Math.sqrt(soma / amostras.length) * 4);
+}
+
+/**
+ * A síntese de fala não expõe o nível do áudio que está saindo, então esta
+ * onda é uma aproximação montada no tempo: a esfera respira enquanto a Sofia
+ * fala, mas o desenho não corresponde ao som de verdade.
+ */
+function nivelAproximadoDaFala(agora: number): number {
+    const tempo = (agora - inicioDaFala) / 1000;
+    const onda =
+        Math.sin(tempo * 7.1) * 0.5 +
+        Math.sin(tempo * 11.7) * 0.3 +
+        Math.sin(tempo * 3.3) * 0.2;
+    return Math.min(1, Math.abs(onda));
+}
+
+function animarEsfera(agora: number): void {
+    const estado = esfera.dataset.estado;
+    const nivel =
+        estado === "ouvindo"
+            ? nivelDoMicrofone()
+            : estado === "falando"
+              ? nivelAproximadoDaFala(agora)
+              : 0;
+
+    esfera.style.setProperty("--nivel", nivel.toFixed(3));
+    quadroDaEsfera = window.requestAnimationFrame(animarEsfera);
+}
+
+function pararAnimacaoDaEsfera(): void {
+    if (quadroDaEsfera !== null) window.cancelAnimationFrame(quadroDaEsfera);
+    quadroDaEsfera = null;
+    esfera.style.setProperty("--nivel", "0");
+}
+
+/**
+ * Liga o analisador do microfone. A permissão é a mesma que o ditado já pede,
+ * então o navegador não pergunta de novo onde ela já foi concedida. Se faltar
+ * qualquer peça, a esfera segue só com a animação ociosa: nada aqui é
+ * essencial para a conversa acontecer.
+ */
+async function ligarAnalisador(): Promise<void> {
+    if (!navigator.mediaDevices?.getUserMedia || typeof AudioContext === "undefined") {
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (!conversaPorVoz) {
+            stream.getTracks().forEach((faixa) => faixa.stop());
+            return;
+        }
+
+        streamDaEsfera = stream;
+        contextoDeAudio = new AudioContext();
+        analisador = contextoDeAudio.createAnalyser();
+        analisador.fftSize = 512;
+        analisador.smoothingTimeConstant = 0.8;
+        contextoDeAudio.createMediaStreamSource(stream).connect(analisador);
+        amostras = new Uint8Array(analisador.frequencyBinCount);
+    } catch {
+        desligarAnalisador();
+    }
+}
+
+function desligarAnalisador(): void {
+    streamDaEsfera?.getTracks().forEach((faixa) => faixa.stop());
+    streamDaEsfera = null;
+    analisador = null;
+    amostras = null;
+    if (contextoDeAudio) void contextoDeAudio.close().catch(() => undefined);
+    contextoDeAudio = null;
+}
+
 function definirEstadoDeVoz(estado: EstadoDeVoz): void {
-    vozPainel.dataset.estado = estado;
+    esfera.dataset.estado = estado;
+    if (estado === "falando") inicioDaFala = performance.now();
     vozEstado.textContent =
         estado === "ouvindo"
             ? "Ouvindo você…"
@@ -1024,15 +1144,26 @@ function sairDaConversaPorVoz(): void {
     reconhecimentoDaConversa?.abort();
     reconhecimentoDaConversa = null;
     pararFala();
+    pararAnimacaoDaEsfera();
+    desligarAnalisador();
 
-    vozPainel.hidden = true;
+    vozTela.hidden = true;
     vozInterromper.hidden = true;
-    coluna.classList.remove("em-voz");
+    principal.inert = false;
+    if (barraLateral) barraLateral.inert = false;
+    document.documentElement.classList.remove("no-scroll");
     vozBtn.classList.remove("ativa");
     vozBtn.setAttribute("aria-pressed", "false");
     vozBtn.setAttribute("aria-label", "Iniciar conversa por voz");
     vozBtn.title = "Iniciar conversa por voz";
     atualizarEnvio();
+
+    /* O foco volta para o botão que abriu a conversa, como na gaveta: só se
+       ele ainda estava na tela que acabou de sumir. */
+    const foco = document.activeElement;
+    if (foco === document.body || (foco instanceof Node && vozTela.contains(foco))) {
+        vozBtn.focus();
+    }
 }
 
 /**
@@ -1145,13 +1276,25 @@ function entrarNaConversaPorVoz(): void {
     pararFala();
     conversaPorVoz = true;
     silenciosSeguidos = 0;
-    vozPainel.hidden = false;
-    coluna.classList.add("em-voz");
+
+    vozTela.hidden = false;
+    document.documentElement.classList.add("no-scroll");
+    principal.inert = true;
+    if (barraLateral) barraLateral.inert = true;
     vozBtn.classList.add("ativa");
     vozBtn.setAttribute("aria-pressed", "true");
     vozBtn.setAttribute("aria-label", "Sair da conversa por voz");
     vozBtn.title = "Sair da conversa por voz";
+    vozFechar.focus();
     atualizarEnvio();
+
+    /* Com movimento reduzido a esfera fica parada, então não há por que abrir
+       o microfone só para medir o nível. */
+    if (!movimentoReduzido()) {
+        quadroDaEsfera = window.requestAnimationFrame(animarEsfera);
+        void ligarAnalisador();
+    }
+
     void rodarConversaPorVoz(Construtor);
 }
 
@@ -1361,7 +1504,6 @@ micWrap.addEventListener("click", () => {
 vozBtn.addEventListener("click", () => {
     if (conversaPorVoz) {
         sairDaConversaPorVoz();
-        entrada.focus();
         return;
     }
     entrarNaConversaPorVoz();
@@ -1376,9 +1518,29 @@ vozInterromper.addEventListener("click", () => {
     pararFala();
 });
 
-porId("sofiaVozSair").addEventListener("click", () => {
-    sairDaConversaPorVoz();
-    entrada.focus();
+vozFechar.addEventListener("click", sairDaConversaPorVoz);
+porId("sofiaVozSair").addEventListener("click", sairDaConversaPorVoz);
+
+/* O resto da página está inerte, mas o Tab ainda sairia para a barra do
+   navegador e voltaria por fora; aqui ele dá a volta dentro da conversa. */
+vozTela.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Tab") return;
+
+    const focaveis = todos<HTMLButtonElement>("button:not([hidden])", vozTela);
+    const primeiro = focaveis.at(0);
+    const ultimo = focaveis.at(-1);
+    if (!primeiro || !ultimo) return;
+
+    if (evento.shiftKey && document.activeElement === primeiro) {
+        evento.preventDefault();
+        ultimo.focus();
+        return;
+    }
+
+    if (!evento.shiftKey && document.activeElement === ultimo) {
+        evento.preventDefault();
+        primeiro.focus();
+    }
 });
 
 porId("sofiaGravacaoCancelar").addEventListener("click", () => {
@@ -1403,7 +1565,6 @@ document.addEventListener("keydown", (evento) => {
     if (conversaPorVoz) {
         evento.preventDefault();
         sairDaConversaPorVoz();
-        entrada.focus();
         return;
     }
     if (!buscaWrap.hidden) {
@@ -1422,6 +1583,7 @@ window.addEventListener("pagehide", () => {
     cancelarGravacao();
     pararFala();
     pararStream();
+    desligarAnalisador();
     if (timerGravacao !== null) {
         window.clearInterval(timerGravacao);
         timerGravacao = null;
