@@ -85,6 +85,12 @@
     outline: none;
 }
 
+/* O foco é mostrado pela moldura acima; o anel geral em volta só do campo
+   deixaria duas linhas na mesma caixa. */
+.hero-search input:focus-visible {
+    box-shadow: none;
+}
+
 .hero-search .primary {
     height: 40px;
 }

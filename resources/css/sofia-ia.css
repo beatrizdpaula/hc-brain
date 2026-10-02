@@ -634,6 +634,12 @@
     outline: none;
 }
 
+/* A pílula inteira acende no foco; o anel geral em volta do texto deixaria
+   um contorno solto dentro dela. */
+.chat-form textarea:focus-visible {
+    box-shadow: none;
+}
+
 .sofia-send {
     display: grid;
     flex-shrink: 0;

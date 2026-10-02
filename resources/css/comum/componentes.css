@@ -630,6 +630,14 @@ a.card {
     outline: none;
 }
 
+/* Quem marca o foco aqui é a moldura inteira, com ícone e botão dentro. O
+   anel geral de :focus-visible desenharia um segundo contorno em volta só do
+   campo, sobrando uma linha que não fecha a caixa. */
+.advanced-search input:focus-visible,
+.document-search input:focus-visible {
+    box-shadow: none;
+}
+
 .document-search {
     padding: 0 var(--esp-3);
 }
