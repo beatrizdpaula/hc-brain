@@ -6,7 +6,9 @@
 
    O microfone grava a pergunta. Se o navegador reconhece voz, o
    texto segue direto. Se não, o áudio vai para o servidor e volta
-   transcrito — ou com um aviso claro, quando a chave não existe.
+   transcrito. Quando não há nenhum dos dois caminhos, a tela nem
+   oferece o áudio: o microfone fica desabilitado e explica o que
+   fazer, em vez de falhar depois do clique.
    ========================================================= */
 
 import { ErroDeApi } from "../comum/api.ts";
@@ -77,10 +79,13 @@ const lista = porId("sofiaConversas");
 const titulo = porId("sofiaTituloConversa");
 const chat = porId("chat");
 const boasVindas = porId("sofiaWelcome");
+const boasVindasTexto = porId("sofiaWelcomeTexto");
 const sugestoes = porId("sofiaSuggestions");
 const entrada = porId<HTMLTextAreaElement>("question");
 const envio = porId<HTMLButtonElement>("sofiaSend");
+const micWrap = porId("sofiaMicWrap");
 const micBtn = porId<HTMLButtonElement>("sofiaMicBtn");
+const anexarBtn = porId<HTMLButtonElement>("sofiaAttachBtn");
 const anexo = porId("sofiaAttachment");
 const anexoNome = porId("sofiaAttachmentName");
 const arquivos = campo("sofiaFileInput");
@@ -93,7 +98,18 @@ const gravacao = porId("sofiaGravacao");
 const gravacaoEstado = porId("sofiaGravacaoEstado");
 const gravacaoTempo = porId("sofiaGravacaoTempo");
 const gravacaoParcial = porId("sofiaGravacaoParcial");
+const dicaVoz = porId("sofiaDicaVoz");
 const aviso = porId("sofiaAviso");
+
+/* Os dois caminhos do áudio, decididos antes do primeiro clique: ditar no
+   próprio navegador, ou mandar o arquivo para o servidor transcrever. */
+const transcricaoNoServidor = dado(tela, "transcricaoServidor") === "1";
+const ditadoNoNavegador = reconhecimentoDisponivel() !== null;
+const audioDisponivel = ditadoNoNavegador || transcricaoNoServidor;
+
+const SEM_VOZ =
+    "Este navegador não reconhece voz. Abra a Sofia no Chrome ou no Edge para " +
+    "falar a pergunta, ou escreva aqui mesmo.";
 
 porId("sofiaUsuarioAvatar").textContent = usuario.iniciais;
 porId("sofiaUsuarioNome").textContent = usuario.nome;
@@ -159,7 +175,7 @@ function atualizarEnvio(): void {
         esperandoResposta() ||
         modoGravacao !== null ||
         (entrada.value.trim() === "" && audioAnexado === null);
-    micBtn.disabled = esperandoResposta();
+    micBtn.disabled = !audioDisponivel || esperandoResposta();
 }
 
 function mostrarAviso(texto: string): void {
@@ -379,7 +395,7 @@ async function perguntar(pergunta: string, voz = false): Promise<void> {
 }
 
 async function enviarBlob(arquivo: Blob, nome: string): Promise<void> {
-    if (esperandoResposta() || transcrevendoId !== null) return;
+    if (!transcricaoNoServidor || esperandoResposta() || transcrevendoId !== null) return;
 
     limparAviso();
     const aberta = conversaAberta();
@@ -763,8 +779,19 @@ async function iniciarGravador(): Promise<void> {
     abrirPainel(false);
 }
 
+function explicarSemVoz(): void {
+    mostrarAviso(SEM_VOZ);
+    entrada.focus();
+}
+
 function iniciarGravacao(): void {
     if (modoGravacao || esperandoResposta()) return;
+
+    if (!audioDisponivel) {
+        explicarSemVoz();
+        return;
+    }
+
     limparAviso();
 
     const Construtor = reconhecimentoDisponivel();
@@ -774,6 +801,46 @@ function iniciarGravacao(): void {
     }
 
     void iniciarGravador();
+}
+
+/**
+ * O que a tela oferece depende do que existe de verdade: sem reconhecimento
+ * no navegador e sem transcrição no servidor, o microfone fica desabilitado
+ * e o anexo some — nenhum áudio chega a sair daqui.
+ */
+function prepararEntradaDeVoz(): void {
+    anexarBtn.hidden = !transcricaoNoServidor;
+
+    if (!transcricaoNoServidor) {
+        boasVindasTexto.textContent = audioDisponivel
+            ? "Pergunte por texto ou grave um áudio. A Sofia responde com empresas, reuniões, documentos, projetos e processos da HC."
+            : "Pergunte por texto. A Sofia responde com empresas, reuniões, documentos, projetos e processos da HC.";
+    }
+
+    if (audioDisponivel) return;
+
+    micWrap.classList.add("sem-voz");
+    micBtn.setAttribute("aria-disabled", "true");
+    micBtn.setAttribute("aria-describedby", "sofiaDicaVoz");
+    micBtn.setAttribute(
+        "aria-label",
+        "Gravar pergunta em áudio — indisponível neste navegador",
+    );
+    micBtn.title = SEM_VOZ;
+    dicaVoz.textContent = SEM_VOZ;
+    dicaVoz.hidden = false;
+    entrada.placeholder = "Pergunte à Sofia";
+}
+
+/** O que a janela "Modelo da Sofia" conta sobre o áudio neste ambiente. */
+function explicacaoDoAudio(): string {
+    if (!audioDisponivel) {
+        return "Neste navegador a pergunta vai por texto: ele não reconhece voz e o ambiente não tem transcrição configurada.";
+    }
+    if (!transcricaoNoServidor) {
+        return "O microfone envia a pergunta falada.";
+    }
+    return "O microfone envia a pergunta falada. Um arquivo de áudio é transcrito no servidor.";
 }
 
 function arquivoEhAudio(arquivo: File): boolean {
@@ -842,7 +909,7 @@ lista.addEventListener("click", (evento) => {
     if (abrir) abrirConversa(dado(abrir, "conversa"));
 });
 
-porId("sofiaAttachBtn").addEventListener("click", () => arquivos.click());
+anexarBtn.addEventListener("click", () => arquivos.click());
 
 arquivos.addEventListener("change", () => {
     const selecionados = Array.from(arquivos.files ?? []);
@@ -874,7 +941,7 @@ modoBase.addEventListener("click", () => atualizarSecao("sofia", { modo: "base" 
 porId("sofiaModelBtn").addEventListener("click", () => {
     showModal(
         "Modelo da Sofia",
-        "A Sofia responde a partir da base da HC: empresas, sócios, reuniões, documentos, treinamentos, projetos e processos. O microfone envia a pergunta falada. Um arquivo de áudio é transcrito quando o ambiente tem a chave configurada. Ela não consulta nada fora daqui.",
+        `A Sofia responde a partir da base da HC: empresas, sócios, reuniões, documentos, treinamentos, projetos e processos. ${explicacaoDoAudio()} Ela não consulta nada fora daqui.`,
     );
 });
 
@@ -884,6 +951,13 @@ micBtn.addEventListener("click", () => {
         return;
     }
     iniciarGravacao();
+});
+
+/* O microfone desabilitado não recebe clique, então quem responde é o
+   invólucro — e a explicação chega de qualquer jeito. */
+micWrap.addEventListener("click", () => {
+    if (audioDisponivel) return;
+    explicarSemVoz();
 });
 
 porId("sofiaGravacaoCancelar").addEventListener("click", () => {
@@ -916,6 +990,7 @@ observarEstado(["sofia"], () => {
     renderConversa();
 });
 
+prepararEntradaDeVoz();
 aplicarModo(obterSecao("sofia").modo);
 renderHistorico();
 renderConversa();

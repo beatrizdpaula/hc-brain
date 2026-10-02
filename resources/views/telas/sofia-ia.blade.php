@@ -7,7 +7,11 @@
 @section('conteudo')
   {{-- Interface da assistente, no formato de um chat de IA. --}}
   <section class="page page-cheia active" id="sofia">
-    <div class="sofia-ai-screen" id="sofiaTela">
+    <div
+      class="sofia-ai-screen"
+      id="sofiaTela"
+      data-transcricao-servidor="{{ $transcricaoConfigurada ? '1' : '0' }}"
+    >
       <button
         type="button"
         class="sofia-historico-fundo"
@@ -81,7 +85,7 @@
               <div class="sofia-marca" aria-hidden="true"><span>S</span></div>
               <p class="sofia-kicker">Assistente da base HC</p>
               <h1 id="sofiaSaudacao">O que você quer saber?</h1>
-              <p class="sofia-welcome-texto">
+              <p class="sofia-welcome-texto" id="sofiaWelcomeTexto">
                 Pergunte por texto, grave um áudio ou anexe um arquivo de som. A Sofia responde com
                 empresas, reuniões, documentos, projetos e processos da HC.
               </p>
@@ -137,22 +141,30 @@
                     placeholder="Pergunte à Sofia ou grave um áudio"
                   ></textarea>
 
-                  <button
-                    type="button"
-                    class="sofia-pill-btn sofia-mic"
-                    id="sofiaMicBtn"
-                    title="Gravar áudio"
-                    aria-pressed="false"
-                    aria-label="Gravar pergunta em áudio"
-                  >
-                    <i data-lucide="mic"></i>
-                  </button>
+                  {{--
+                    O invólucro do microfone existe para o estado sem voz: um botão
+                    desabilitado não recebe clique, então é ele quem explica o que fazer.
+                  --}}
+                  <span class="sofia-mic-wrap" id="sofiaMicWrap">
+                    <button
+                      type="button"
+                      class="sofia-pill-btn sofia-mic"
+                      id="sofiaMicBtn"
+                      title="Gravar áudio"
+                      aria-pressed="false"
+                      aria-label="Gravar pergunta em áudio"
+                    >
+                      <i data-lucide="mic"></i>
+                    </button>
+                  </span>
 
                   <button class="sofia-send" id="sofiaSend" type="submit" aria-label="Enviar pergunta" disabled>
                     <i data-lucide="arrow-up"></i>
                   </button>
                 </div>
               </form>
+
+              <p class="sofia-dica" id="sofiaDicaVoz" hidden></p>
 
               <p class="sofia-aviso" id="sofiaAviso" role="alert" hidden></p>
 

@@ -595,9 +595,27 @@
     height: 18px;
 }
 
-.sofia-pill-btn:hover {
+.sofia-pill-btn:hover:not(:disabled) {
     background: var(--surface-hover);
     color: var(--texto-forte);
+}
+
+.sofia-mic-wrap {
+    display: flex;
+    flex-shrink: 0;
+}
+
+/*
+  Navegador sem reconhecimento de voz e servidor sem transcrição: o microfone
+  fica desabilitado e deixa o clique passar para o invólucro, que explica o
+  caminho — digitar, ou abrir a Sofia no Chrome ou no Edge.
+*/
+.sofia-mic-wrap.sem-voz {
+    cursor: not-allowed;
+}
+
+.sofia-mic-wrap.sem-voz .sofia-mic {
+    pointer-events: none;
 }
 
 .chat-form textarea {
@@ -773,6 +791,14 @@
 .sofia-gravacao-enviar:hover {
     background: var(--roxo-claro);
     color: #10131c;
+}
+
+.sofia-dica {
+    margin-top: var(--esp-2);
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    line-height: var(--altura-normal);
+    text-align: center;
 }
 
 .sofia-aviso {

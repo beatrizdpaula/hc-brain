@@ -12,8 +12,8 @@ use Tests\TestCase;
 
 /**
  * Áudio da Sofia: o arquivo vira texto e a resposta sai da mesma base das
- * outras perguntas. Sem chave de transcrição, a tela recebe o aviso — nada
- * é enviado para fora.
+ * outras perguntas. Sem chave de transcrição, a tela já abre sabendo disso e
+ * esconde o caminho do áudio — nada é enviado para fora.
  */
 class SofiaAudioTest extends TestCase
 {
@@ -46,6 +46,24 @@ class SofiaAudioTest extends TestCase
         ], [
             'Accept' => 'application/json',
         ]);
+    }
+
+    public function test_tela_avisa_que_o_servidor_nao_transcreve(): void
+    {
+        $this->autenticado()
+            ->get('/sofia-ia')
+            ->assertOk()
+            ->assertSee('data-transcricao-servidor="0"', false);
+    }
+
+    public function test_tela_libera_o_audio_quando_a_transcricao_esta_configurada(): void
+    {
+        config()->set('hc.sofia.transcricao.chave', 'chave-de-teste');
+
+        $this->autenticado()
+            ->get('/sofia-ia')
+            ->assertOk()
+            ->assertSee('data-transcricao-servidor="1"', false);
     }
 
     public function test_audio_exige_sessao(): void

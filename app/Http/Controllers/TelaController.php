@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Empresa;
+use App\Support\Transcricao;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
@@ -27,9 +28,16 @@ class TelaController extends Controller
         return view('telas.documentos');
     }
 
+    /**
+     * A tela precisa saber, antes do primeiro clique no microfone, se o
+     * servidor transcreve áudio. Sem isso — e sem reconhecimento de voz no
+     * navegador — ela esconde o caminho do áudio em vez de falhar depois.
+     */
     public function sofiaIa(): View
     {
-        return view('telas.sofia-ia');
+        return view('telas.sofia-ia', [
+            'transcricaoConfigurada' => Transcricao::configurada(),
+        ]);
     }
 
     public function treinamentos(): View
