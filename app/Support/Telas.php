@@ -38,6 +38,9 @@ final class Telas
         ['id' => 'senha', 'titulo' => 'Recuperar acesso', 'rota' => '/esqueci-a-senha'],
         // O detalhe de um cliente mantém "Empresas & clientes" ativo no menu.
         ['id' => 'cliente', 'titulo' => 'Detalhe do cliente', 'rota' => '/clientes/{id}', 'menu' => 'clientes'],
+        // O perfil é de quem está logado, não um lugar para onde se navega:
+        // ele é alcançado pelo bloco do usuário no rodapé da barra lateral.
+        ['id' => 'perfil', 'titulo' => 'Meu perfil', 'rota' => '/perfil'],
     ];
 
     /** Folhas compartilhadas por toda tela que tem o shell (menu, topo e modais). */

@@ -51,6 +51,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/financeiro', [TelaController::class, 'financeiro'])->name('financeiro');
     Route::get('/projetos', [TelaController::class, 'projetos'])->name('projetos');
     Route::get('/processos', [TelaController::class, 'processos'])->name('processos');
+    Route::get('/perfil', [TelaController::class, 'perfil'])->name('perfil');
 
     Route::prefix('api')->group(function () {
         Route::get('/contadores', [Api\ContadorController::class, 'index']);

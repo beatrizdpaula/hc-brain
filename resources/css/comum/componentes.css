@@ -343,7 +343,7 @@ a.card {
 }
 
 .tag.gray {
-    background: rgb(148 163 184 / 14%);
+    background: var(--cinza-fundo);
     color: var(--texto-suave);
 }
 
@@ -393,7 +393,7 @@ a.card {
 .primary:hover {
     border-color: var(--roxo-claro);
     background: var(--roxo-claro);
-    color: #10131c;
+    color: var(--sobre-roxo-claro);
 }
 
 /* Enquanto o servidor responde, o botão fica inerte em vez de aceitar um

@@ -14,6 +14,8 @@
     <meta name="description" content="{{ $descricao }}" />
     <link rel="icon" href="{{ asset('favicon.svg') }}" />
 
+    @include('layouts.tema')
+
     <script>
       window.HC_BRAIN = @json(\App\Support\Bootstrap::paraNavegador(auth()->user()));
     </script>

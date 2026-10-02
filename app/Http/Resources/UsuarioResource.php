@@ -27,8 +27,11 @@ class UsuarioResource extends JsonResource
     /**
      * "Hoje, 10:42" em vez de uma data crua: é assim que se lê um último
      * acesso. O banco guarda o instante; o texto é montado aqui.
+     *
+     * É público porque a tela de perfil mostra o mesmo dado da tela de
+     * Usuários, e duas formatações para o mesmo campo desencontrariam.
      */
-    private static function quando(?Carbon $momento): string
+    public static function quando(?Carbon $momento): string
     {
         if ($momento === null) {
             return 'Nunca acessou';

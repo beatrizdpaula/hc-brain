@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UsuarioResource;
 use App\Models\Empresa;
 use App\Support\Transcricao;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
@@ -94,5 +96,20 @@ class TelaController extends Controller
     public function processos(): View
     {
         return view('telas.processos');
+    }
+
+    /**
+     * O perfil é sempre o de quem está logado: não há id na rota, então não
+     * há como pedir o cadastro de outra pessoa por aqui.
+     */
+    public function perfil(Request $request): View
+    {
+        $usuario = $request->user();
+
+        return view('telas.perfil', [
+            'usuario' => $usuario,
+            // O mesmo texto que a tela de Usuários mostra nesta coluna.
+            'ultimoAcesso' => UsuarioResource::quando($usuario->ultimo_acesso),
+        ]);
     }
 }

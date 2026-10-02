@@ -9,6 +9,8 @@
     <meta name="description" content="{{ $descricao }}" />
     <link rel="icon" href="{{ asset('favicon.svg') }}" />
 
+    @include('layouts.tema')
+
     @vite(\App\Support\Telas::assets($tela, ['base', 'modal']))
   </head>
 

@@ -684,7 +684,7 @@
 
 .sofia-send:hover {
     background: var(--roxo-claro);
-    color: #10131c;
+    color: var(--sobre-roxo-claro);
 }
 
 .sofia-attachment {
@@ -867,7 +867,7 @@
 
 .sofia-gravacao-enviar:hover {
     background: var(--roxo-claro);
-    color: #10131c;
+    color: var(--sobre-roxo-claro);
 }
 
 /* --------------------------------------------------------------------------
@@ -885,7 +885,7 @@
     justify-content: center;
     gap: var(--esp-4);
     padding: var(--esp-8) var(--esp-6);
-    background: radial-gradient(120% 80% at 50% 42%, #101828 0%, var(--bg) 72%);
+    background: radial-gradient(120% 80% at 50% 42%, var(--voz-fundo) 0%, var(--bg) 72%);
 }
 
 /* O halo da esfera passa da caixa dela; sem esta folga o texto cai dentro
@@ -1006,6 +1006,8 @@
     filter: blur(12px);
 }
 
+/* O núcleo é ilustração, não superfície: é um corpo que brilha, e um corpo
+   que brilha é escuro nos dois temas. Por isso ele não usa os tokens. */
 .sofia-esfera-nucleo {
     position: absolute;
     inset: 0;
@@ -1260,7 +1262,7 @@
         z-index: 15;
         display: block;
         border: none;
-        background: rgb(0 0 0 / 45%);
+        background: var(--sobreposicao);
     }
 
     .sofia-conversa-apagar,

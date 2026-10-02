@@ -20,6 +20,7 @@ const TELAS = [
   "financeiro",
   "projetos",
   "processos",
+  "perfil",
 ];
 
 const COMUNS = ["base", "layout", "sidebar", "componentes", "modal"];

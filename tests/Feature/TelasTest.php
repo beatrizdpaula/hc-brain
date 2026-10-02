@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Support\Telas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -23,7 +24,7 @@ class TelasTest extends TestCase
             ->all();
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('rotasDoMenu')]
+    #[DataProvider('rotasDoMenu')]
     public function test_tela_do_menu_abre_para_quem_tem_sessao(string $rota): void
     {
         $this->seed();
@@ -31,7 +32,7 @@ class TelasTest extends TestCase
         $this->actingAs(User::firstOrFail())->get($rota)->assertOk();
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('rotasDoMenu')]
+    #[DataProvider('rotasDoMenu')]
     public function test_tela_do_menu_exige_sessao(string $rota): void
     {
         $this->get($rota)->assertRedirect('/login');
@@ -55,5 +56,45 @@ class TelasTest extends TestCase
             ->get('/clientes/empresa-que-nao-existe')
             ->assertNotFound()
             ->assertSee('Empresa não encontrada');
+    }
+
+    /**
+     * A rota não recebe id: o perfil é o de quem está logado. Por isso o
+     * teste entra como alguém que não é o primeiro usuário da base e cobra
+     * que seja esse cadastro, e só esse, a aparecer na tela.
+     */
+    public function test_perfil_mostra_os_dados_de_quem_esta_logado(): void
+    {
+        $this->seed();
+
+        $usuario = User::where('email', 'ana.souza@healthcare.com.br')->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->get('/perfil')
+            ->assertOk()
+            ->assertSee('Ana Souza')
+            ->assertSee('ana.souza@healthcare.com.br')
+            ->assertSee('Colaborador')
+            ->assertSee('Projetos')
+            ->assertSee('Inativo')
+            ->assertDontSee('beatriz@healthcare.com.br');
+    }
+
+    public function test_perfil_diz_quando_nunca_houve_acesso(): void
+    {
+        $this->seed();
+
+        $usuario = User::firstOrFail();
+        $usuario->update(['ultimo_acesso' => null]);
+
+        $this->actingAs($usuario)
+            ->get('/perfil')
+            ->assertOk()
+            ->assertSee('Nunca acessou');
+    }
+
+    public function test_perfil_exige_sessao(): void
+    {
+        $this->get('/perfil')->assertRedirect('/login');
     }
 }

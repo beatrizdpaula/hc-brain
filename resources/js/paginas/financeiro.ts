@@ -121,7 +121,7 @@ function renderDonut(dados: LinhaCarteira[]): void {
 
     porId("financeDonut").style.background = total
         ? `conic-gradient(${paradas.join(",")})`
-        : "#162231";
+        : "var(--surface-alto)";
 
     porId("financeLegend").innerHTML = totais.length
         ? totais

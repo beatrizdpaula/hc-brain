@@ -83,7 +83,7 @@
 
 .erro-voltar:hover {
     background: var(--roxo-claro);
-    color: #10131c;
+    color: var(--sobre-roxo-claro);
 }
 
 @media (max-width: 550px) {

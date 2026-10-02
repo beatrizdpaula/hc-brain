@@ -154,7 +154,7 @@
     padding: 1px var(--esp-2);
     margin-left: auto;
     border-radius: var(--raio-pill);
-    background: rgb(255 255 255 / 8%);
+    background: var(--cinza-fundo);
     color: var(--texto-suave);
     font-size: var(--texto-xs);
     font-weight: var(--peso-forte);
@@ -182,12 +182,27 @@
     background: var(--sidebar);
 }
 
+/* O bloco do usuário leva ao perfil, então ele se comporta como item de
+   menu: mesma altura de toque, mesmo realce no hover. O botão de sair fica
+   logo abaixo, em vermelho, para que um não seja confundido com o outro. */
 .user-profile {
     display: flex;
     align-items: center;
     gap: var(--esp-3);
     min-width: 0;
-    padding: 0 var(--esp-2);
+    padding: var(--esp-2);
+    border-radius: var(--raio-sm);
+    color: inherit;
+    text-decoration: none;
+    transition: var(--transicao);
+}
+
+.user-profile:hover {
+    background: var(--surface-hover);
+}
+
+.user-profile.active {
+    background: var(--roxo-fundo);
 }
 
 .user-info {
@@ -245,7 +260,7 @@
     position: fixed;
     z-index: 90;
     inset: 0;
-    background: rgb(4 8 14 / 65%);
+    background: var(--sobreposicao);
     opacity: 1;
     visibility: visible;
     transition:

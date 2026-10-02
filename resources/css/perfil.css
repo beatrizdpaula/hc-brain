@@ -1,0 +1,79 @@
+/* ==========================================================================
+   TELA MEU PERFIL
+   Cartão de identidade no topo e os campos do cadastro em lista. O painel,
+   as etiquetas e o avatar vêm de comum/componentes.css.
+   ========================================================================== */
+
+.perfil-identidade {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--esp-4);
+    padding: var(--esp-5);
+    margin-bottom: var(--esp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+}
+
+.perfil-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: var(--texto-xl);
+}
+
+.perfil-identidade-texto {
+    min-width: 0;
+    margin-right: auto;
+}
+
+.perfil-identidade-texto h2 {
+    margin-bottom: var(--esp-1);
+    font-size: var(--texto-xl);
+}
+
+.perfil-identidade-texto p {
+    color: var(--texto-suave);
+    font-size: var(--texto-base);
+    word-break: break-word;
+}
+
+.perfil-identidade-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-2);
+}
+
+/* --------------------------------------------------------------------------
+   CAMPOS DO CADASTRO
+   -------------------------------------------------------------------------- */
+.perfil-dados {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--esp-5) var(--esp-6);
+}
+
+.perfil-dados dt {
+    margin-bottom: var(--esp-2);
+    color: var(--texto-suave);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.perfil-dados dd {
+    color: var(--texto-forte);
+    font-size: var(--texto-md);
+    word-break: break-word;
+}
+
+/* O último acesso é uma data e não deve quebrar no meio. */
+.perfil-acesso {
+    white-space: nowrap;
+}
+
+.perfil-nota {
+    max-width: 76ch;
+    margin-bottom: var(--esp-4);
+}

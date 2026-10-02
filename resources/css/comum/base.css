@@ -3,6 +3,10 @@
    Os tokens daqui valem para o app inteiro: cor, tipografia, espaçamento,
    raio e sombra. Nenhuma tela deve inventar um valor novo; se um número não
    existe aqui, ou ele entra nesta lista ou o caso não é de fato diferente.
+
+   O tema escuro é o padrão e mora em `:root`. O claro é só a lista de cores
+   redefinida em `html[data-tema="claro"]` — quem aplica o atributo é o
+   script embutido no <head> do layout, antes da primeira pintura.
    ========================================================================== */
 
 /* A fonte entra no bundle junto com os ícones: nada é buscado em CDN, então
@@ -10,6 +14,10 @@
 @import "@fontsource-variable/inter";
 
 :root {
+    /* Alinha o que o navegador desenha sozinho (campos nativos, barras de
+       rolagem, seletor de data) ao tema do app. */
+    color-scheme: dark;
+
     /* ----------------------------------------------------------------------
      SUPERFÍCIES
      Do fundo da página até o elemento mais elevado, em ordem de altura.
@@ -41,6 +49,11 @@
     --roxo-claro: #a79bff;
     --roxo-fundo: rgb(124 108 245 / 16%);
 
+    /* O roxo claro também é preenchimento (o hover do botão principal). No
+       escuro ele clareia, então o texto por cima tem de escurecer; no claro
+       acontece o contrário. Por isso o par é um token, e não um valor fixo. */
+    --sobre-roxo-claro: #10131c;
+
     --azul: #5b8cff;
     --azul-fundo: rgb(91 140 255 / 14%);
 
@@ -52,6 +65,19 @@
 
     --vermelho: #f0637e;
     --vermelho-fundo: rgb(240 99 126 / 14%);
+
+    /* Neutro translúcido das etiquetas sem cor e dos contadores do menu. */
+    --cinza-fundo: rgb(148 163 184 / 14%);
+
+    /* ----------------------------------------------------------------------
+     SUPERFÍCIES ESPECIAIS
+     Fundos que não são nem superfície nem marca: a barra superior
+     translúcida, o escurecimento atrás de modal e gaveta, e o palco da
+     conversa por voz da Sofia.
+     ---------------------------------------------------------------------- */
+    --topbar-fundo: rgb(10 15 22 / 85%);
+    --sobreposicao: rgb(4 8 14 / 70%);
+    --voz-fundo: #101828;
 
     /* ----------------------------------------------------------------------
      TIPOGRAFIA
@@ -112,6 +138,59 @@
     --largura-conteudo: 1440px;
 
     --anel-foco: 0 0 0 2px var(--bg), 0 0 0 4px var(--roxo);
+}
+
+/* ==========================================================================
+   TEMA CLARO
+   Só cor: tipografia, espaçamento e raio são os mesmos nos dois temas. As
+   cores de marca escurecem porque no claro elas deixam de ser fundo e
+   passam a ser texto — o roxo #7c6cf5 sobre branco dá 4:1 e não passa no
+   AA. As sombras saem do preto pesado para um azul-escuro suave, que é o
+   que uma sombra parece sobre papel.
+   ========================================================================== */
+html[data-tema="claro"] {
+    color-scheme: light;
+
+    --bg: #f3f5f9;
+    --surface: #fff;
+    --surface-alto: #f1f4f9;
+    --surface-hover: #e8edf5;
+    --sidebar: #fff;
+
+    --border: #dce2ec;
+    --border-forte: #bcc6d6;
+
+    --texto-forte: #0f1725;
+    --texto: #33404f;
+    --texto-suave: #556576;
+    --texto-fraco: #5b6b80;
+
+    --roxo: #5b4bd6;
+    --roxo-claro: #4a3cc0;
+    --roxo-fundo: rgb(91 75 214 / 12%);
+    --sobre-roxo-claro: #fff;
+
+    --azul: #2563c9;
+    --azul-fundo: rgb(37 99 201 / 12%);
+
+    --verde: #0d7a5a;
+    --verde-fundo: rgb(13 122 90 / 12%);
+
+    --amarelo: #8a6100;
+    --amarelo-fundo: rgb(138 97 0 / 12%);
+
+    --vermelho: #c22847;
+    --vermelho-fundo: rgb(194 40 71 / 10%);
+
+    --cinza-fundo: rgb(71 85 105 / 10%);
+
+    --topbar-fundo: rgb(255 255 255 / 85%);
+    --sobreposicao: rgb(15 23 37 / 40%);
+    --voz-fundo: #e4e7f4;
+
+    --sombra-sm: 0 1px 2px rgb(15 23 37 / 8%);
+    --sombra-md: 0 8px 24px rgb(15 23 37 / 10%);
+    --sombra-lg: 0 20px 48px rgb(15 23 37 / 14%);
 }
 
 *,
@@ -210,7 +289,7 @@ svg {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #3b5070;
+    background: var(--texto-fraco);
     background-clip: padding-box;
 }
 

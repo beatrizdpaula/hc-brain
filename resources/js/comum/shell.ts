@@ -13,9 +13,12 @@ import { desenharIcones, icone, iconeSeguro } from "./icones.ts";
 import { ligarInfos, montarModais } from "./modal.ts";
 import { PAGINAS, caminhoDaPagina, paginaPorId } from "./paginas.ts";
 import { sair } from "./sessao.ts";
+import { botaoDeTema, ligarTema } from "./tema.ts";
 
 const MARCA = "HC Brain";
 const SUBMARCA = "Health Care";
+
+const TELA_PERFIL = "perfil";
 
 function montarMenu(ativo: string, usuario: SessaoUsuario): void {
     const sidebar = talvez("[data-sidebar]");
@@ -63,16 +66,22 @@ function montarMenu(ativo: string, usuario: SessaoUsuario): void {
     `);
     }
 
+    // O bloco do usuário é o caminho natural para o próprio perfil: quem
+    // procura os próprios dados clica no próprio nome.
+    const noPerfil = ativo === TELA_PERFIL;
+
     blocos.push(`
     </nav>
     <div class="user-section">
-      <div class="user-profile">
+      <a class="user-profile${noPerfil ? " active" : ""}"
+         href="${caminhoDaPagina(TELA_PERFIL)}"
+         ${noPerfil ? 'aria-current="page"' : ""}>
         <span class="avatar" aria-hidden="true">${escapar(usuario.iniciais)}</span>
         <span class="user-info">
           <strong>${escapar(usuario.nome)}</strong>
           <small title="${escapar(usuario.email)}">${escapar(usuario.email)}</small>
         </span>
-      </div>
+      </a>
       <button type="button" class="logout-button" data-sair>
         ${icone("log-out")}
         <span>Sair</span>
@@ -100,6 +109,7 @@ function montarTopbar(titulo: string, usuario: SessaoUsuario): void {
     </div>
 
     <div class="topbar-right">
+      ${botaoDeTema()}
       <span class="topbar-user">
         <span class="avatar" aria-hidden="true">${escapar(usuario.iniciais)}</span>
         <span>${escapar(usuario.nome)}</span>
@@ -180,6 +190,7 @@ export function iniciarPagina(paginaId: string): SessaoUsuario {
     montarTopbar(pagina?.titulo ?? MARCA, usuario);
     montarModais();
     ligarGaveta(app);
+    ligarTema();
     desenharIcones();
 
     todos("[data-sair]").forEach((botao) => {

@@ -28,7 +28,7 @@
     height: 52px;
     padding: 0 var(--esp-5);
     border-bottom: 1px solid var(--border);
-    background: rgb(10 15 22 / 85%);
+    background: var(--topbar-fundo);
     backdrop-filter: blur(12px);
 }
 
@@ -90,6 +90,32 @@
     align-items: center;
     gap: var(--esp-3);
     min-width: 0;
+}
+
+/* Troca de tema. Só a cor do próprio botão transita: animar a página
+   inteira brigaria com o tema que o <head> já pintou no primeiro quadro. */
+.tema-toggle {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--raio-pill);
+    background: var(--surface);
+    color: var(--texto-suave);
+    transition: var(--transicao);
+}
+
+.tema-toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+.tema-toggle:hover {
+    border-color: var(--roxo);
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
 }
 
 .topbar-user {

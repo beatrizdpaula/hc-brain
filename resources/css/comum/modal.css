@@ -12,7 +12,7 @@
     justify-content: center;
     padding: var(--esp-5);
     inset: 0;
-    background: rgb(4 8 14 / 72%);
+    background: var(--sobreposicao);
     backdrop-filter: blur(4px);
 }
 

@@ -12,6 +12,8 @@
     <title>@yield('titulo') • HC Brain</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" />
 
+    @include('layouts.tema')
+
     @vite(['resources/css/comum/base.css', 'resources/css/erro.css'])
   </head>
 
