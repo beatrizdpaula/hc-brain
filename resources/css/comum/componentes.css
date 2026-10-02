@@ -500,6 +500,14 @@ a.card {
     color: var(--texto);
 }
 
+/* Pílula que disparou uma troca de tela: enquanto a próxima página não pinta,
+   o destaque mostra qual foi a escolha em vez de deixar o clique sem resposta. */
+.quick button[aria-busy="true"] {
+    border-color: var(--roxo);
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+}
+
 .search-chip.active {
     border-color: var(--roxo);
     background: var(--roxo-fundo);

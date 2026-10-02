@@ -30,6 +30,12 @@ const resultPeriod = selecao("resultPeriod");
 const HOJE = new Date();
 HOJE.setHours(0, 0, 0, 0);
 
+// Quem chega do Início já trouxe o termo no estado, mas o HTML da tela nasce
+// na versão "Buscas recentes". Sem este ajuste antes do await, o primeiro
+// quadro mostra o cabeçalho errado e o aviso de carregamento das buscas
+// recentes, e tudo salta de lugar quando os dados chegam.
+prepararChegada();
+
 const researchData = await carregarPesquisa();
 
 function dataDoItem(item: ResultadoPesquisa): Date | null {
@@ -70,6 +76,28 @@ function filtrar(): ResultadoPesquisa[] {
             periodoOk
         );
     });
+}
+
+/**
+ * Alinha a tela ao termo que já está no estado antes de os dados chegarem,
+ * para o carregamento acontecer no lugar certo em vez de a página se
+ * reorganizar na frente de quem acabou de clicar.
+ */
+function prepararChegada(): void {
+    aplicarEstadoNosControles();
+
+    const busca = obterSecao("pesquisa").termo.trim();
+
+    // O número só é conhecido depois dos dados; um "0" aqui viraria outro
+    // valor em seguida.
+    porId("resultCount").textContent = "";
+
+    if (!busca) return;
+
+    recentes.hidden = true;
+    limpar.hidden = false;
+    porId("resultsTitle").textContent = "Resultados encontrados";
+    resultados.innerHTML = `<div class="estado-carregando">Procurando por “${escapar(busca)}”…</div>`;
 }
 
 function renderRecentes(): void {

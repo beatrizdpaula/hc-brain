@@ -194,6 +194,12 @@ porId<HTMLFormElement>("heroSearchForm").addEventListener("submit", (evento) => 
     if (termo) pesquisar(termo);
 });
 
+// A navegação só pinta a outra tela alguns instantes depois do clique. Sem
+// marcar a pílula escolhida, ela fica parada no estado de foco do navegador e
+// a espera parece travamento.
 todos("[data-search]").forEach((botao) => {
-    botao.addEventListener("click", () => pesquisar(dado(botao, "search")));
+    botao.addEventListener("click", () => {
+        botao.setAttribute("aria-busy", "true");
+        pesquisar(dado(botao, "search"));
+    });
 });
