@@ -52,4 +52,23 @@ return [
 
     ],
 
+    /*
+    | Áudio enviado à Sofia. O navegador que reconhece voz transcreve sozinho
+    | e manda o texto. Arquivo anexado — e gravação num navegador sem esse
+    | recurso — passa pela transcrição daqui. Sem a chave, a tela avisa; a
+    | pergunta digitada continua valendo.
+    */
+    'sofia' => [
+        /* Teto por áudio, em kilobytes. */
+        'audio_kb' => 10240,
+
+        'extensoes' => ['webm', 'mp3', 'mpeg', 'mpga', 'm4a', 'mp4', 'wav', 'ogg', 'oga'],
+
+        'transcricao' => [
+            'chave' => env('OPENAI_API_KEY'),
+            'url' => env('OPENAI_TRANSCRIPTION_URL', 'https://api.openai.com/v1/audio/transcriptions'),
+            'modelo' => env('OPENAI_TRANSCRIPTION_MODEL', 'whisper-1'),
+        ],
+    ],
+
 ];

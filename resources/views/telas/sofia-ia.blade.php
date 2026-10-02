@@ -78,10 +78,16 @@
 
           <div class="sofia-centro">
             <div class="sofia-welcome" id="sofiaWelcome">
-              <h1>O que você quer saber?</h1>
+              <div class="sofia-marca" aria-hidden="true"><span>S</span></div>
+              <p class="sofia-kicker">Assistente da base HC</p>
+              <h1 id="sofiaSaudacao">O que você quer saber?</h1>
+              <p class="sofia-welcome-texto">
+                Pergunte por texto, grave um áudio ou anexe um arquivo de som. A Sofia responde com
+                empresas, reuniões, documentos, projetos e processos da HC.
+              </p>
             </div>
 
-            <div class="sofia-compose-wrap">
+            <div class="sofia-compose-wrap" id="sofiaCompose">
               <form class="chat-form" id="chatForm">
                 <div class="sofia-attachment" id="sofiaAttachment">
                   <i data-lucide="paperclip"></i>
@@ -96,12 +102,31 @@
                   </button>
                 </div>
 
-                <div class="sofia-pill">
-                  <input type="file" id="sofiaFileInput" hidden multiple />
+                <div class="sofia-gravacao" id="sofiaGravacao" hidden role="region" aria-label="Gravação de áudio">
+                  <div class="sofia-gravacao-topo">
+                    <span class="sofia-gravacao-pulso" aria-hidden="true"></span>
+                    <strong id="sofiaGravacaoEstado">Ouvindo…</strong>
+                    <span id="sofiaGravacaoTempo">0:00</span>
+                  </div>
+                  <p class="sofia-gravacao-parcial" id="sofiaGravacaoParcial" aria-live="polite">
+                    Fale sua pergunta.
+                  </p>
+                  <div class="sofia-gravacao-acoes">
+                    <button type="button" class="sofia-gravacao-cancelar" id="sofiaGravacaoCancelar">
+                      Cancelar
+                    </button>
+                    <button type="button" class="sofia-gravacao-enviar" id="sofiaGravacaoEnviar">
+                      Enviar áudio
+                    </button>
+                  </div>
+                </div>
 
-                  <button type="button" class="sofia-pill-btn" id="sofiaAttachBtn" title="Anexar arquivo">
+                <div class="sofia-pill">
+                  <input type="file" id="sofiaFileInput" hidden multiple accept="audio/*,.webm,.mp3,.m4a,.wav,.ogg,.mpeg,.mp4" />
+
+                  <button type="button" class="sofia-pill-btn" id="sofiaAttachBtn" title="Anexar áudio">
                     <i data-lucide="plus"></i>
-                    <span class="sr-only">Anexar arquivo</span>
+                    <span class="sr-only">Anexar áudio</span>
                   </button>
 
                   <label class="sr-only" for="question">Sua pergunta</label>
@@ -109,12 +134,18 @@
                     id="question"
                     rows="1"
                     autocomplete="off"
-                    placeholder="Pergunte à Sofia"
+                    placeholder="Pergunte à Sofia ou grave um áudio"
                   ></textarea>
 
-                  <button type="button" class="sofia-pill-btn sofia-mic" id="sofiaMicBtn" title="Usar microfone">
+                  <button
+                    type="button"
+                    class="sofia-pill-btn sofia-mic"
+                    id="sofiaMicBtn"
+                    title="Gravar áudio"
+                    aria-pressed="false"
+                    aria-label="Gravar pergunta em áudio"
+                  >
                     <i data-lucide="mic"></i>
-                    <span class="sr-only">Usar microfone</span>
                   </button>
 
                   <button class="sofia-send" id="sofiaSend" type="submit" aria-label="Enviar pergunta" disabled>
@@ -122,6 +153,8 @@
                   </button>
                 </div>
               </form>
+
+              <p class="sofia-aviso" id="sofiaAviso" role="alert" hidden></p>
 
               <small class="sofia-disclaimer">
                 A Sofia pode cometer erros. Confira informações importantes antes de tomar decisões.

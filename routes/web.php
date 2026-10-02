@@ -108,5 +108,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/sofia/sugestoes', [Api\SofiaController::class, 'sugestoes']);
         Route::post('/sofia/perguntar', [Api\SofiaController::class, 'perguntar']);
+        Route::post('/sofia/audio', [Api\SofiaController::class, 'audio']);
     });
 });
