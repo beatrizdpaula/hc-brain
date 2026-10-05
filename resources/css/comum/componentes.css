@@ -17,7 +17,6 @@
 .research-sidebar,
 .recent-searches,
 .result-card,
-.meeting-card,
 .empresa-card,
 .socio-card,
 .fonte-item,
@@ -40,7 +39,6 @@
 .folder:hover,
 .document-card:hover,
 .result-card:hover,
-.meeting-card:hover,
 .empresa-card:hover,
 .fonte-item:hover,
 .mini-meeting:hover {
@@ -247,7 +245,6 @@ a.card {
     color: var(--roxo-claro);
 }
 
-.meetings-list,
 .empresas-list {
     overflow: hidden;
     border: 1px solid var(--border);

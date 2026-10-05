@@ -5,16 +5,16 @@
 ])
 
 @section('conteudo')
-  {{-- Histórico, calendário e lista de reuniões. --}}
+  {{-- Agenda de reuniões: resumo do recorte, movimento por dia e o histórico
+       em lista, cartões ou calendário. --}}
   <section class="page active" id="reunioes">
     <div class="page-header">
       <div class="page-header-copy">
         <span class="page-overline">Histórico central de reuniões</span>
-        <h1>Reuniões</h1>
+        <h1>Agenda de reuniões</h1>
         <p class="muted">
-          Todas as reuniões da empresa — aberturas, transferências, dúvidas,
-          comerciais, alinhamentos e financeiras — vinculadas à empresa e ao sócio
-          responsável.
+          Encontre cada reunião por data, tipo ou responsável e abra os detalhes
+          quando precisar.
         </p>
       </div>
 
@@ -23,33 +23,70 @@
       </div>
     </div>
 
-    <div class="meetings-filters">
-      <div class="advanced-search">
-        <span class="search-icon"><i data-lucide="search"></i></span>
-        <label class="sr-only" for="meetingSearch">Pesquisar reuniões</label>
-        <input
-          id="meetingSearch"
-          autocomplete="off"
-          placeholder="Pesquisar por empresa, sócio, assunto ou palavra-chave..."
-        />
+    <section class="agenda-resumo" aria-label="Resumo do período">
+      <div class="agenda-resumo-topo">
+        <h2>Resumo do período</h2>
+        <span class="agenda-intervalo" id="agendaIntervalo">—</span>
+      </div>
+      <div class="agenda-stats" id="agendaStats"></div>
+    </section>
+
+    <section class="agenda-movimento" aria-label="Movimento das reuniões por dia">
+      <div class="agenda-movimento-copy">
+        <span class="agenda-overline">Visão rápida</span>
+        <h2>Movimento no período</h2>
+        <p class="muted">Selecione uma coluna para ver as reuniões daquele dia.</p>
+        <ul class="agenda-legenda">
+          <li class="verde">Concluídas</li>
+          <li class="azul">Agendadas</li>
+          <li class="vermelho">Canceladas</li>
+        </ul>
+      </div>
+      <div class="agenda-grafico" id="agendaGrafico"></div>
+    </section>
+
+    <section class="agenda-painel" aria-label="Reuniões">
+      <div class="agenda-painel-topo">
+        <div>
+          <h2>Reuniões do período</h2>
+          <p class="muted">
+            Aberturas, transferências, dúvidas, comerciais, alinhamentos e
+            financeiras na mesma ordem cronológica.
+          </p>
+        </div>
+
+        <div class="agenda-segmentado" id="agendaPeriodo" role="group" aria-label="Período rápido">
+          <button type="button" data-periodo="hoje">Hoje</button>
+          <button type="button" data-periodo="7dias">7 dias</button>
+          <button type="button" data-periodo="mes">Este mês</button>
+          <button type="button" data-periodo="tudo">Todo período</button>
+        </div>
       </div>
 
-      <div class="meetings-type-row" id="meetingTypeRow">
-        <span class="filtro-inline-label">Tipo</span>
-        <button class="search-chip active" type="button" data-meeting-type="Todas">Todas</button>
-        <button class="search-chip" type="button" data-meeting-type="Abertura">Abertura</button>
-        <button class="search-chip" type="button" data-meeting-type="Transferência">Transferência</button>
-        <button class="search-chip" type="button" data-meeting-type="Dúvidas">Dúvidas</button>
-        <button class="search-chip" type="button" data-meeting-type="Comercial">Comercial</button>
-        <button class="search-chip" type="button" data-meeting-type="Alinhamento">Alinhamento</button>
-        <button class="search-chip" type="button" data-meeting-type="Financeira">Financeira</button>
-      </div>
+      <div class="agenda-filtros">
+        <div class="campo agenda-campo-busca">
+          <label for="meetingSearch">Buscar reunião</label>
+          <div class="agenda-busca">
+            <span class="search-icon"><i data-lucide="search"></i></span>
+            <input
+              id="meetingSearch"
+              type="search"
+              autocomplete="off"
+              placeholder="Empresa, tipo, resumo ou responsável..."
+            />
+          </div>
+        </div>
 
-      <div class="meetings-select-row">
         <div class="campo">
-          <label for="meetingEmpresaFilter">Empresa</label>
-          <select id="meetingEmpresaFilter">
-            <option value="Todas">Todas as empresas</option>
+          <label for="meetingTypeFilter">Tipo</label>
+          <select id="meetingTypeFilter">
+            <option value="Todas">Todos</option>
+            <option value="Abertura">Abertura</option>
+            <option value="Transferência">Transferência</option>
+            <option value="Dúvidas">Dúvidas</option>
+            <option value="Comercial">Comercial</option>
+            <option value="Alinhamento">Alinhamento</option>
+            <option value="Financeira">Financeira</option>
           </select>
         </div>
 
@@ -57,50 +94,79 @@
           <label for="meetingStatusFilter">Status</label>
           <select id="meetingStatusFilter">
             <option value="Todos">Todos</option>
-            <option value="Concluída">Concluída</option>
             <option value="Agendada">Agendada</option>
+            <option value="Concluída">Concluída</option>
             <option value="Cancelada">Cancelada</option>
           </select>
         </div>
 
-        <button id="clearMeetingFilters" class="clear-filters" type="button">
-          Limpar filtros
-        </button>
-      </div>
-    </div>
-
-    <section class="meetings-calendar-panel" id="meetingsCalendarPanel" aria-label="Calendário de reuniões">
-      <div class="meetings-calendar-head">
-        <button type="button" class="icon-button" id="calendarPrev" aria-label="Mês anterior"><i data-lucide="chevron-left"></i></button>
-        <div class="calendar-month-title">
-          <strong id="calendarMonthTitle">—</strong>
-          <button type="button" class="secondary calendar-today" id="calendarToday">Hoje</button>
+        <div class="campo">
+          <label for="meetingResponsavelFilter">Quem realiza</label>
+          <select id="meetingResponsavelFilter">
+            <option value="Todos">Todos</option>
+          </select>
         </div>
-        <button type="button" class="icon-button" id="calendarNext" aria-label="Próximo mês"><i data-lucide="chevron-right"></i></button>
-      </div>
-      <div class="calendar-weekdays" aria-hidden="true">
-        <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span>
-        <span>Sex</span><span>Sáb</span><span>Dom</span>
-      </div>
-      <div class="calendar-days" id="calendarDays"></div>
-    </section>
 
-    <div class="panel">
-      <div class="panel-head">
-        <div>
-          <h2>Histórico de reuniões</h2>
-          <p id="meetingCount">0 reuniões</p>
+        <div class="campo">
+          <label for="meetingEmpresaFilter">Empresa</label>
+          <select id="meetingEmpresaFilter">
+            <option value="Todas">Todas</option>
+          </select>
         </div>
-        <div class="view-toggle" id="meetingViewToggle">
-          <button type="button" class="active" data-meeting-view="list">Lista</button>
-          <button type="button" data-meeting-view="cards">Cards</button>
+
+        <div class="campo">
+          <label for="meetingFrom">De</label>
+          <input id="meetingFrom" type="date" />
+        </div>
+
+        <div class="campo">
+          <label for="meetingTo">Até</label>
+          <input id="meetingTo" type="date" />
         </div>
       </div>
 
-      <div class="meetings-list" id="meetingsList">
+      <div class="agenda-rodape-filtros">
+        <p class="agenda-contagem">
+          <strong id="meetingCount">0</strong> reuniões encontradas
+          <button id="clearMeetingFilters" class="agenda-reset" type="button">
+            Limpar filtros
+          </button>
+        </p>
+
+        <div class="view-toggle agenda-visoes" id="meetingViewToggle">
+          <button type="button" class="active" data-meeting-view="list">
+            <i data-lucide="list"></i> Lista
+          </button>
+          <button type="button" data-meeting-view="cards">
+            <i data-lucide="layout-grid"></i> Cards
+          </button>
+          <button type="button" data-meeting-view="calendar">
+            <i data-lucide="calendar-days"></i> Calendário
+          </button>
+        </div>
+      </div>
+
+      <div class="agenda-tabela" id="meetingsList">
         <div class="estado-carregando">Carregando reuniões…</div>
       </div>
-      <div class="meetings-grid hidden-view" id="meetingsGrid"></div>
-    </div>
+
+      <div class="agenda-cards hidden-view" id="meetingsGrid"></div>
+
+      <div class="agenda-calendario hidden-view" id="meetingsCalendar">
+        <div class="meetings-calendar-head">
+          <button type="button" class="icon-button" id="calendarPrev" aria-label="Mês anterior"><i data-lucide="chevron-left"></i></button>
+          <div class="calendar-month-title">
+            <strong id="calendarMonthTitle">—</strong>
+            <button type="button" class="secondary calendar-today" id="calendarToday">Hoje</button>
+          </div>
+          <button type="button" class="icon-button" id="calendarNext" aria-label="Próximo mês"><i data-lucide="chevron-right"></i></button>
+        </div>
+        <div class="calendar-weekdays" aria-hidden="true">
+          <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span>
+          <span>Sex</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div class="calendar-days" id="calendarDays"></div>
+      </div>
+    </section>
   </section>
 @endsection

@@ -26,6 +26,7 @@ export interface BuscaRecente {
 
 export type VisualizacaoDocumentos = "grid" | "list";
 export type VisualizacaoLista = "cards" | "list";
+export type VisualizacaoAgenda = VisualizacaoLista | "calendar";
 export type ModoSofia = "search" | "base";
 
 export interface EstadoPesquisa {
@@ -49,7 +50,12 @@ export interface EstadoReunioes {
     tipo: string;
     empresa: string;
     status: string;
-    visualizacao: VisualizacaoLista;
+    responsavel: string;
+    /** Início do recorte, em AAAA-MM-DD. Vazio é "desde a primeira reunião". */
+    de: string;
+    /** Fim do recorte, em AAAA-MM-DD. Vazio é "até a última reunião". */
+    ate: string;
+    visualizacao: VisualizacaoAgenda;
     /** Mês exibido no calendário, no formato AAAA-MM; null usa o mês atual. */
     mesCalendario: string | null;
 }
@@ -131,6 +137,11 @@ const ESTADO_PADRAO: Estado = {
         tipo: "Todas",
         empresa: "Todas",
         status: "Todos",
+        responsavel: "Todos",
+        // Sem recorte de data: quem chega do detalhe de uma empresa precisa
+        // ver o histórico inteiro dela, não só o mês corrente.
+        de: "",
+        ate: "",
         visualizacao: "list",
         mesCalendario: null,
     },

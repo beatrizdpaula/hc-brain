@@ -1,6 +1,7 @@
 /* =========================================================
    TELA REUNIÕES
-   Lista, calendário e filtros. Os filtros vivem no estado
+   Agenda com resumo do recorte, movimento por dia e o histórico
+   em lista, cartões ou calendário. Os filtros vivem no estado
    compartilhado, então "ver reuniões desta empresa" vindo do
    detalhe do cliente já chega com o recorte aplicado.
    ========================================================= */
@@ -15,25 +16,18 @@ import {
     tagDoTipoDeReuniao,
     TIPOS_DE_REUNIAO,
     type Reuniao,
+    type StatusReuniao,
 } from "../dados/reunioes.ts";
-import {
-    alvoMaisProximo,
-    campo,
-    dado,
-    porId,
-    selecao,
-    talvez,
-    todos,
-} from "../comum/dom.ts";
+import { alvoMaisProximo, campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import {
     atualizarSecao,
     observarEstado,
     obterSecao,
-    type VisualizacaoLista,
+    type VisualizacaoAgenda,
 } from "../comum/estado.ts";
-import { escapar, iniciais, mesPorExtenso, plural } from "../comum/formato.ts";
+import { dataCurta, escapar, mesPorExtenso, plural } from "../comum/formato.ts";
 import { abrirFormulario } from "../comum/formulario.ts";
-import { desenharIcones, icone } from "../comum/icones.ts";
+import { desenharIcones, icone, type NomeDeIcone } from "../comum/icones.ts";
 import { openMeetingModal, showModal } from "../comum/modal.ts";
 import { iniciarPagina } from "../comum/shell.ts";
 
@@ -41,37 +35,78 @@ iniciarPagina("reunioes");
 
 const lista = porId("meetingsList");
 const grid = porId("meetingsGrid");
+const calendario = porId("meetingsCalendar");
+const stats = porId("agendaStats");
+const grafico = porId("agendaGrafico");
+const intervalo = porId("agendaIntervalo");
 const busca = campo("meetingSearch");
+const tipoFilter = selecao("meetingTypeFilter");
 const empresaFilter = selecao("meetingEmpresaFilter");
 const statusFilter = selecao("meetingStatusFilter");
+const responsavelFilter = selecao("meetingResponsavelFilter");
+const deCampo = campo("meetingFrom");
+const ateCampo = campo("meetingTo");
 
 let { reunioes: meetingsData, empresas } = await carregarReunioes();
 
-empresas.forEach(({ nome }) => {
-    const opcao = document.createElement("option");
-    opcao.value = nome;
-    opcao.textContent = nome;
-    empresaFilter.appendChild(opcao);
-});
+/** Cor da etiqueta de cada status, reaproveitada na barra e na legenda. */
+const CLASSE_DO_STATUS: Record<StatusReuniao, string> = {
+    Concluída: "verde",
+    Agendada: "azul",
+    Cancelada: "vermelho",
+};
 
-function mesSelecionado(): Date {
-    const { mesCalendario } = obterSecao("reunioes");
-    if (mesCalendario) {
-        const [ano, mes] = mesCalendario.split("-").map(Number);
-        return new Date(ano, mes - 1, 1);
-    }
-    const hoje = new Date();
-    hoje.setDate(1);
-    return hoje;
+preencherOpcoes();
+
+/**
+ * Monta as opções dos dois filtros que dependem da base. Roda de novo a cada
+ * recarga, porque cadastrar uma reunião pode estrear um responsável.
+ */
+function preencherOpcoes(): void {
+    const repovoar = (seletor: HTMLSelectElement, nomes: string[]): void => {
+        // A primeira opção é o "todos" que veio no Blade; as demais são da base.
+        seletor.length = 1;
+        nomes.forEach((nome) => {
+            const opcao = document.createElement("option");
+            opcao.value = nome;
+            opcao.textContent = nome;
+            seletor.appendChild(opcao);
+        });
+    };
+
+    repovoar(
+        empresaFilter,
+        empresas.map(({ nome }) => nome),
+    );
+
+    // Os responsáveis não têm cadastro próprio; a lista sai das reuniões
+    // existentes, que é exatamente o conjunto que o filtro consegue achar.
+    repovoar(
+        responsavelFilter,
+        [...new Set(meetingsData.map(({ responsavel }) => responsavel))]
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b, "pt-BR")),
+    );
 }
 
-function guardarMes(data: Date): void {
-    atualizarSecao("reunioes", {
-        mesCalendario: `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`,
-    });
+function hojeEmIso(): string {
+    const agora = new Date();
+    return paraIso(agora);
 }
 
-function reunioesFiltradas(): Reuniao[] {
+function paraIso(data: Date): string {
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const dia = String(data.getDate()).padStart(2, "0");
+    return `${data.getFullYear()}-${mes}-${dia}`;
+}
+
+/* ---------------------------------------------------------
+   RECORTE
+   `recorte` é tudo menos o status, porque são os cartões do
+   resumo que mexem no status — eles precisam de uma base que
+   não muda quando um deles é acionado.
+   --------------------------------------------------------- */
+function recorte(): Reuniao[] {
     const estado = obterSecao("reunioes");
     const termo = estado.busca.toLowerCase().trim();
 
@@ -81,8 +116,12 @@ function reunioesFiltradas(): Reuniao[] {
             (reuniao) => estado.empresa === "Todas" || reuniao.empresa === estado.empresa,
         )
         .filter(
-            (reuniao) => estado.status === "Todos" || reuniao.status === estado.status,
+            (reuniao) =>
+                estado.responsavel === "Todos" ||
+                reuniao.responsavel === estado.responsavel,
         )
+        .filter((reuniao) => !estado.de || reuniao.dataOrd >= estado.de)
+        .filter((reuniao) => !estado.ate || reuniao.dataOrd <= estado.ate)
         .filter((reuniao) => {
             if (!termo) return true;
             const texto = [
@@ -99,58 +138,245 @@ function reunioesFiltradas(): Reuniao[] {
         .sort((a, b) => (a.dataOrd < b.dataOrd ? 1 : -1));
 }
 
-function renderMeetingCard(reuniao: Reuniao): string {
-    return `
-    <article class="meeting-card" data-meeting-id="${reuniao.id}">
-      <div class="meeting-card-top">
-        <span class="tag ${tagDoTipoDeReuniao[reuniao.tipo] ?? ""}">${escapar(reuniao.tipo)}</span>
-        <span class="tag ${tagDoStatus[reuniao.status] ?? ""}">${escapar(reuniao.status)}</span>
-      </div>
-
-      <div>
-        <h3>Reunião de ${escapar(reuniao.tipo)}</h3>
-        <span class="meeting-empresa">${escapar(reuniao.empresa)} • ${reuniao.data}</span>
-      </div>
-
-      <p class="meeting-resumo">${escapar(reuniao.resumo)}</p>
-
-      <div class="meeting-card-footer">
-        <span>${plural(reuniao.participantes.length, "participante", "participantes")}</span>
-        <span class="meeting-link">Ver detalhes ${icone("arrow-right")}</span>
-      </div>
-    </article>
-  `;
+function reunioesFiltradas(): Reuniao[] {
+    const { status } = obterSecao("reunioes");
+    return recorte().filter((reuniao) => status === "Todos" || reuniao.status === status);
 }
 
-function renderMeetingListItem(reuniao: Reuniao): string {
-    const classeStatus =
-        reuniao.status === "Cancelada"
-            ? "timeline-cancelled"
-            : reuniao.status === "Agendada"
-              ? "timeline-scheduled"
-              : "timeline-completed";
+function agruparPorDia(reunioes: Reuniao[]): [string, Reuniao[]][] {
+    const grupos = reunioes.reduce<Record<string, Reuniao[]>>((mapa, reuniao) => {
+        (mapa[reuniao.dataOrd] ||= []).push(reuniao);
+        return mapa;
+    }, {});
 
+    return Object.entries(grupos);
+}
+
+/* ---------------------------------------------------------
+   RESUMO DO PERÍODO
+   --------------------------------------------------------- */
+interface CartaoResumo {
+    chave: string;
+    rotulo: string;
+    valor: number;
+    detalhe: string;
+    cor: string;
+    icone: NomeDeIcone;
+    /** Status que o cartão aplica ao ser acionado. */
+    status: string;
+    /** Fatias da barra, em porcentagem, na ordem em que aparecem. */
+    fatias: { cor: string; parte: number }[];
+}
+
+function montarResumo(base: Reuniao[]): CartaoResumo[] {
+    const hoje = hojeEmIso();
+    const total = base.length;
+    const porStatus = (status: StatusReuniao): Reuniao[] =>
+        base.filter((reuniao) => reuniao.status === status);
+
+    const concluidas = porStatus("Concluída");
+    const agendadas = porStatus("Agendada");
+    const canceladas = porStatus("Cancelada");
+    const futuras = agendadas.filter((reuniao) => reuniao.dataOrd >= hoje);
+    const proxima = futuras.at(-1);
+    const fatia = (quantidade: number): number =>
+        total ? (quantidade / total) * 100 : 0;
+    const proporcao = (quantidade: number): string =>
+        total
+            ? `${Math.round(fatia(quantidade))}% do recorte`
+            : "Sem reuniões no recorte";
+
+    return [
+        {
+            chave: "total",
+            rotulo: "Reuniões no período",
+            valor: total,
+            detalhe: total
+                ? `${concluidas.length} concluídas · ${agendadas.length} agendadas`
+                : "Nenhuma reunião neste recorte",
+            cor: "roxo",
+            icone: "calendar",
+            status: "Todos",
+            fatias: [
+                { cor: "verde", parte: fatia(concluidas.length) },
+                { cor: "azul", parte: fatia(agendadas.length) },
+                { cor: "vermelho", parte: fatia(canceladas.length) },
+            ],
+        },
+        {
+            chave: "proximas",
+            rotulo: "Próximas agendadas",
+            valor: futuras.length,
+            detalhe: proxima
+                ? `Mais próxima: ${dataCurta(proxima.dataOrd)}`
+                : "Nenhuma reunião futura neste recorte",
+            cor: "azul",
+            icone: "calendar-days",
+            status: "Agendada",
+            fatias: [{ cor: "azul", parte: fatia(futuras.length) }],
+        },
+        {
+            chave: "concluidas",
+            rotulo: "Concluídas",
+            valor: concluidas.length,
+            detalhe: proporcao(concluidas.length),
+            cor: "verde",
+            icone: "check",
+            status: "Concluída",
+            fatias: [{ cor: "verde", parte: fatia(concluidas.length) }],
+        },
+        {
+            chave: "canceladas",
+            rotulo: "Canceladas",
+            valor: canceladas.length,
+            detalhe: proporcao(canceladas.length),
+            cor: "vermelho",
+            icone: "x",
+            status: "Cancelada",
+            fatias: [{ cor: "vermelho", parte: fatia(canceladas.length) }],
+        },
+    ];
+}
+
+function renderResumo(base: Reuniao[]): void {
+    const estado = obterSecao("reunioes");
+
+    intervalo.textContent =
+        estado.de || estado.ate
+            ? `${estado.de ? dataCurta(estado.de) : "início"} — ${estado.ate ? dataCurta(estado.ate) : "hoje"}`
+            : "Todo o histórico";
+
+    stats.innerHTML = montarResumo(base)
+        .map((cartao) => {
+            const ativo = cartao.status !== "Todos" && estado.status === cartao.status;
+
+            return `
+    <button class="agenda-stat ${cartao.cor}" type="button" data-stat-status="${escapar(cartao.status)}"
+            aria-pressed="${ativo}" aria-label="Filtrar: ${escapar(cartao.rotulo)}, ${cartao.valor}">
+      <span class="agenda-stat-topo">
+        <span class="agenda-stat-icone">${icone(cartao.icone)}</span>
+        <span class="agenda-stat-seta">${icone("chevron-right")}</span>
+      </span>
+      <span class="agenda-stat-meio">
+        <strong class="agenda-stat-valor">${cartao.valor}</strong>
+        <span class="agenda-stat-rotulo">${escapar(cartao.rotulo)}</span>
+      </span>
+      <span class="agenda-stat-base">
+        <span class="agenda-stat-detalhe">${escapar(cartao.detalhe)}</span>
+        <span class="agenda-stat-barra" aria-hidden="true">
+          ${cartao.fatias.map((parte) => `<span class="${parte.cor}" style="width: ${parte.parte}%"></span>`).join("")}
+        </span>
+      </span>
+    </button>`;
+        })
+        .join("");
+}
+
+/* ---------------------------------------------------------
+   MOVIMENTO POR DIA
+   --------------------------------------------------------- */
+function renderGrafico(base: Reuniao[]): void {
+    const dias = agruparPorDia(base).sort(([a], [b]) => (a < b ? -1 : 1));
+
+    if (!dias.length) {
+        grafico.innerHTML = `<p class="agenda-grafico-vazio">Nenhuma reunião no recorte para desenhar.</p>`;
+        return;
+    }
+
+    const maior = Math.max(...dias.map(([, reunioes]) => reunioes.length));
+
+    // Num mês só, o dia da semana ajuda a ler o ritmo. Quando o recorte
+    // atravessa meses, "ter, 01" vira adivinhação: aí o mês é que importa.
+    const umMesSo = new Set(dias.map(([dataOrd]) => dataOrd.slice(0, 7))).size === 1;
+
+    grafico.innerHTML = dias
+        .map(([dataOrd, reunioes]) => {
+            const data = new Date(`${dataOrd}T00:00:00`);
+            const rotulo = data
+                .toLocaleDateString(
+                    "pt-BR",
+                    umMesSo
+                        ? { weekday: "short", day: "2-digit" }
+                        : { day: "2-digit", month: "short" },
+                )
+                .replace(".", "");
+            const altura = Math.max(8, Math.round((reunioes.length / maior) * 96));
+            const fatias = STATUS_DE_REUNIAO.map((status) => {
+                const parte = reunioes.filter((reuniao) => reuniao.status === status);
+                if (!parte.length) return "";
+                const porcento = (parte.length / reunioes.length) * 100;
+                return `<span class="${CLASSE_DO_STATUS[status]}" style="height: ${porcento}%"></span>`;
+            }).join("");
+
+            return `
+    <button class="agenda-barra" type="button" data-grafico-dia="${dataOrd}"
+            aria-label="${plural(reunioes.length, "reunião", "reuniões")} em ${escapar(rotulo)}">
+      <span class="agenda-barra-numero">${reunioes.length}</span>
+      <span class="agenda-barra-coluna" style="height: ${altura}px">${fatias}</span>
+      <span class="agenda-barra-dia">${escapar(rotulo)}</span>
+    </button>`;
+        })
+        .join("");
+}
+
+/* ---------------------------------------------------------
+   LISTA, CARTÕES E CALENDÁRIO
+   --------------------------------------------------------- */
+function classeDoStatus(reuniao: Reuniao): string {
+    return `status-${CLASSE_DO_STATUS[reuniao.status]}`;
+}
+
+function etiquetaDeStatus(reuniao: Reuniao): string {
+    return `<span class="tag ${tagDoStatus[reuniao.status]}"><i class="agenda-ponto"></i>${escapar(reuniao.status)}</span>`;
+}
+
+function etiquetaDeTipo(reuniao: Reuniao): string {
+    return `<span class="agenda-tipo ${tagDoTipoDeReuniao[reuniao.tipo]}"><i class="agenda-ponto"></i>${escapar(reuniao.tipo)}</span>`;
+}
+
+function renderLinha(reuniao: Reuniao): string {
     return `
-    <article class="timeline-item ${classeStatus}" data-meeting-id="${reuniao.id}" data-date-ord="${reuniao.dataOrd}">
-      <div class="timeline-time">
-        <strong>${reuniao.horario || "—"}</strong>
-        <span>${reuniao.data}</span>
+    <div class="agenda-linha ${classeDoStatus(reuniao)}" role="button" tabindex="0"
+         data-meeting-id="${reuniao.id}" data-date-ord="${reuniao.dataOrd}"
+         aria-label="Abrir reunião de ${escapar(reuniao.tipo)} com ${escapar(reuniao.empresa)}">
+      <div>
+        ${
+            reuniao.horario
+                ? `<span class="agenda-hora">${reuniao.horario}</span>`
+                : `<span class="agenda-hora-sub">Sem horário</span>`
+        }
       </div>
-      <div class="avatar timeline-avatar">${iniciais(reuniao.empresa)}</div>
-      <div class="timeline-main">
-        <div class="timeline-title">
-          <strong>Reunião de ${escapar(reuniao.tipo)}</strong>
-          <span class="tag ${tagDoTipoDeReuniao[reuniao.tipo] ?? ""}">${escapar(reuniao.tipo)}</span>
+      <div class="agenda-linha-main">
+        <div class="agenda-linha-titulo">${escapar(reuniao.empresa)}</div>
+        <div class="agenda-linha-motivo">${escapar(reuniao.resumo)}</div>
+      </div>
+      <div>${etiquetaDeTipo(reuniao)}</div>
+      <div>${etiquetaDeStatus(reuniao)}</div>
+      <div class="agenda-pessoa">${escapar(reuniao.responsavel)}</div>
+      <div class="agenda-pessoa">${plural(reuniao.participantes.length, "pessoa", "pessoas")}</div>
+      <span class="agenda-seta">${icone("chevron-right")}</span>
+    </div>`;
+}
+
+function renderCartao(reuniao: Reuniao): string {
+    return `
+    <article class="agenda-card ${classeDoStatus(reuniao)}" role="button" tabindex="0"
+             data-meeting-id="${reuniao.id}"
+             aria-label="Abrir reunião de ${escapar(reuniao.tipo)} com ${escapar(reuniao.empresa)}">
+      <div class="agenda-card-topo">
+        <span class="agenda-card-hora${reuniao.horario ? "" : " vazia"}">${reuniao.horario || "Sem horário"}</span>
+        <div class="agenda-card-main">
+          <div class="agenda-card-titulo">${escapar(reuniao.empresa)}</div>
+          <div class="agenda-card-motivo">${escapar(reuniao.resumo)}</div>
         </div>
-        <div class="timeline-company">${escapar(reuniao.empresa)} • Responsável: ${escapar(reuniao.responsavel)}</div>
-        <div class="timeline-participants">${plural(reuniao.participantes.length, "participante", "participantes")} • ${escapar(reuniao.resumo)}</div>
+        <span class="agenda-seta">${icone("chevron-right")}</span>
       </div>
-      <div class="timeline-actions">
-        <span class="tag ${tagDoStatus[reuniao.status] ?? ""}">${escapar(reuniao.status)}</span>
-        <span class="timeline-chevron">${icone("chevron-right")}</span>
+      <div class="agenda-card-meta">
+        ${etiquetaDeTipo(reuniao)}
+        ${etiquetaDeStatus(reuniao)}
+        <span class="agenda-pessoa">Realiza: ${escapar(reuniao.responsavel)}</span>
       </div>
-    </article>
-  `;
+    </article>`;
 }
 
 // Agrupamento inspirado em agendas como o Google Calendar: hoje, amanhã
@@ -168,31 +394,57 @@ function rotuloRelativo(dataOrd: string): string | null {
     return null;
 }
 
-function renderMeetingDayHeader(dataOrd: string, total: number): string {
+function renderCabecalhoDoDia(dataOrd: string, total: number): string {
     const data = new Date(`${dataOrd}T00:00:00`);
     const relativo = rotuloRelativo(dataOrd);
+    const mesCurto = data
+        .toLocaleDateString("pt-BR", { month: "short" })
+        .replace(".", "");
+    // "sexta-feira" são duas palavras para o CSS: com `text-transform:
+    // capitalize` sairia "Sexta-Feira", então só a inicial sobe, aqui.
     const diaSemana = data.toLocaleDateString("pt-BR", { weekday: "long" });
-    const dia = data.toLocaleDateString("pt-BR", { day: "numeric" });
-    const mes = data.toLocaleDateString("pt-BR", { month: "long" });
-    const ano =
-        data.getFullYear() !== new Date().getFullYear()
-            ? ` de ${data.getFullYear()}`
-            : "";
-    const rotulo = relativo || `${diaSemana}, ${dia} de ${mes}${ano}`;
+    const titulo = relativo || `${diaSemana[0].toUpperCase()}${diaSemana.slice(1)}`;
+    const completa = data.toLocaleDateString("pt-BR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
 
     return `
-    <div class="timeline-day-header ${relativo ? "relative-day" : ""} ${relativo === "Hoje" ? "today" : ""}">
-      <span class="dot"></span>
-      <span class="day-relative">${rotulo}</span>
-      <small>${plural(total, "reunião", "reuniões")}</small>
-    </div>
-  `;
+    <div class="agenda-dia ${relativo === "Hoje" ? "hoje" : ""}">
+      <div class="agenda-dia-pastilha">
+        <strong>${data.getDate()}</strong>
+        <small>${escapar(mesCurto)}</small>
+      </div>
+      <div class="agenda-dia-texto">
+        <strong>${escapar(titulo)}</strong>
+        <small>${escapar(completa)}</small>
+      </div>
+      <span class="agenda-dia-contagem">${plural(total, "reunião", "reuniões")}</span>
+    </div>`;
 }
 
 interface CelulaCalendario {
     dia: number;
     data: Date;
     fora: boolean;
+}
+
+function mesSelecionado(): Date {
+    const { mesCalendario } = obterSecao("reunioes");
+    if (mesCalendario) {
+        const [ano, mes] = mesCalendario.split("-").map(Number);
+        return new Date(ano, mes - 1, 1);
+    }
+    const hoje = new Date();
+    hoje.setDate(1);
+    return hoje;
+}
+
+function guardarMes(data: Date): void {
+    atualizarSecao("reunioes", {
+        mesCalendario: `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`,
+    });
 }
 
 function renderCalendario(): void {
@@ -239,7 +491,7 @@ function renderCalendario(): void {
     }, {});
 
     celulas.forEach(({ dia, data, fora }) => {
-        const iso = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
+        const iso = paraIso(data);
         const reunioes = porDia[iso] || [];
         const hojeMesmo = data.getTime() === hoje.getTime();
 
@@ -252,23 +504,18 @@ function renderCalendario(): void {
           .slice(0, 3)
           .map(
               (reuniao) =>
-                  `<span class="calendar-meeting ${reuniao.status === "Concluída" ? "completed" : reuniao.status === "Cancelada" ? "cancelled" : ""}">${reuniao.horario || "—"} · ${escapar(reuniao.empresa)}</span>`,
+                  `<span class="calendar-meeting ${CLASSE_DO_STATUS[reuniao.status]}">${reuniao.horario || "—"} · ${escapar(reuniao.empresa)}</span>`,
           )
           .join("")}
       ${reunioes.length > 3 ? `<span class="calendar-more">+${plural(reunioes.length - 3, "reunião", "reuniões")}</span>` : ""}
     `;
 
         if (!fora) {
-            celula.addEventListener("click", () => {
-                todos(".calendar-day.selected", dias).forEach((item) =>
-                    item.classList.remove("selected"),
-                );
-                celula.classList.add("selected");
-                talvez(`.timeline-item[data-date-ord="${iso}"]`)?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                });
-            });
+            // Clicar num dia é o mesmo que recortar o período para ele: é o
+            // caminho que a lista e o gráfico já entendem.
+            celula.addEventListener("click", () =>
+                atualizarSecao("reunioes", { de: iso, ate: iso, visualizacao: "list" }),
+            );
         }
 
         dias.appendChild(celula);
@@ -277,56 +524,109 @@ function renderCalendario(): void {
 
 function renderReunioes(): void {
     const estado = obterSecao("reunioes");
+    const base = recorte();
     const filtradas = reunioesFiltradas();
     const vazio = `<div class="empty-state">Nenhuma reunião encontrada com os filtros atuais.</div>`;
+    const grupos = agruparPorDia(filtradas);
 
-    grid.innerHTML = filtradas.length ? filtradas.map(renderMeetingCard).join("") : vazio;
+    renderResumo(base);
+    renderGrafico(base);
 
-    if (filtradas.length) {
-        const porDia = filtradas.reduce<Record<string, Reuniao[]>>((grupos, reuniao) => {
-            (grupos[reuniao.dataOrd] ||= []).push(reuniao);
-            return grupos;
-        }, {});
+    lista.innerHTML = filtradas.length
+        ? `<div class="agenda-tabela-cab">
+        <span>Horário</span><span>Reunião / motivo</span><span>Tipo</span>
+        <span>Status</span><span>Quem realiza</span><span>Participantes</span><span></span>
+      </div>` +
+          grupos
+              .map(
+                  ([dataOrd, reunioes]) =>
+                      renderCabecalhoDoDia(dataOrd, reunioes.length) +
+                      reunioes.map(renderLinha).join(""),
+              )
+              .join("")
+        : vazio;
 
-        lista.innerHTML = Object.entries(porDia)
-            .map(
-                ([dataOrd, reunioes]) =>
-                    renderMeetingDayHeader(dataOrd, reunioes.length) +
-                    reunioes.map(renderMeetingListItem).join(""),
-            )
-            .join("");
-    } else {
-        lista.innerHTML = vazio;
-    }
+    grid.innerHTML = filtradas.length
+        ? grupos
+              .map(
+                  ([dataOrd, reunioes]) =>
+                      renderCabecalhoDoDia(dataOrd, reunioes.length) +
+                      `<div class="agenda-cards-grade">${reunioes.map(renderCartao).join("")}</div>`,
+              )
+              .join("")
+        : vazio;
 
-    porId("meetingCount").textContent = plural(filtradas.length, "reunião", "reuniões");
+    porId("meetingCount").textContent = String(filtradas.length);
 
     [grid, lista].forEach((container) => {
         todos("[data-meeting-id]", container).forEach((elemento) => {
-            elemento.addEventListener("click", () => {
+            const abrir = (): void => {
                 const reuniao = meetingsData.find(
                     (registro) => registro.id === Number(dado(elemento, "meetingId")),
                 );
                 if (reuniao) openMeetingModal(reuniao, () => abrirFormularioDe(reuniao));
+            };
+
+            elemento.addEventListener("click", abrir);
+            elemento.addEventListener("keydown", (evento) => {
+                if (evento.key === "Enter" || evento.key === " ") {
+                    evento.preventDefault();
+                    abrir();
+                }
             });
         });
     });
 
-    grid.classList.toggle("hidden-view", estado.visualizacao !== "cards");
     lista.classList.toggle("hidden-view", estado.visualizacao !== "list");
+    grid.classList.toggle("hidden-view", estado.visualizacao !== "cards");
+    calendario.classList.toggle("hidden-view", estado.visualizacao !== "calendar");
 
     renderCalendario();
     desenharIcones();
 }
 
+/* ---------------------------------------------------------
+   CONTROLES
+   --------------------------------------------------------- */
+/** Os quatro atalhos de período traduzidos para o par de datas. */
+function intervaloDoAtalho(atalho: string): { de: string; ate: string } {
+    const hoje = new Date();
+
+    if (atalho === "hoje") {
+        return { de: paraIso(hoje), ate: paraIso(hoje) };
+    }
+
+    if (atalho === "7dias") {
+        const fim = new Date(hoje);
+        fim.setDate(fim.getDate() + 6);
+        return { de: paraIso(hoje), ate: paraIso(fim) };
+    }
+
+    if (atalho === "mes") {
+        const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+        return { de: paraIso(inicio), ate: paraIso(fim) };
+    }
+
+    return { de: "", ate: "" };
+}
+
 function aplicarEstadoNosControles(): void {
     const estado = obterSecao("reunioes");
     if (busca.value !== estado.busca) busca.value = estado.busca;
+    tipoFilter.value = estado.tipo;
     empresaFilter.value = estado.empresa;
     statusFilter.value = estado.status;
+    responsavelFilter.value = estado.responsavel;
+    if (deCampo.value !== estado.de) deCampo.value = estado.de;
+    if (ateCampo.value !== estado.ate) ateCampo.value = estado.ate;
 
-    todos("#meetingTypeRow .search-chip").forEach((chip) => {
-        chip.classList.toggle("active", chip.dataset.meetingType === estado.tipo);
+    todos("#agendaPeriodo button").forEach((botao) => {
+        const alvo = intervaloDoAtalho(dado(botao, "periodo"));
+        botao.classList.toggle(
+            "active",
+            alvo.de === estado.de && alvo.ate === estado.ate,
+        );
     });
 
     todos("#meetingViewToggle button").forEach((botao) => {
@@ -338,23 +638,55 @@ function aplicarEstadoNosControles(): void {
 }
 
 busca.addEventListener("input", () => atualizarSecao("reunioes", { busca: busca.value }));
+tipoFilter.addEventListener("change", () =>
+    atualizarSecao("reunioes", { tipo: tipoFilter.value }),
+);
 empresaFilter.addEventListener("change", () =>
     atualizarSecao("reunioes", { empresa: empresaFilter.value }),
 );
 statusFilter.addEventListener("change", () =>
     atualizarSecao("reunioes", { status: statusFilter.value }),
 );
+responsavelFilter.addEventListener("change", () =>
+    atualizarSecao("reunioes", { responsavel: responsavelFilter.value }),
+);
+deCampo.addEventListener("change", () =>
+    atualizarSecao("reunioes", { de: deCampo.value }),
+);
+ateCampo.addEventListener("change", () =>
+    atualizarSecao("reunioes", { ate: ateCampo.value }),
+);
 
-porId("meetingTypeRow").addEventListener("click", (evento) => {
-    const chip = alvoMaisProximo(evento, "[data-meeting-type]");
-    if (chip) atualizarSecao("reunioes", { tipo: dado(chip, "meetingType") });
+porId("agendaPeriodo").addEventListener("click", (evento) => {
+    const botao = alvoMaisProximo(evento, "[data-periodo]");
+    if (botao) atualizarSecao("reunioes", intervaloDoAtalho(dado(botao, "periodo")));
+});
+
+// Um cartão já acionado volta a "Todos": é o mesmo gesto para aplicar e tirar.
+stats.addEventListener("click", (evento) => {
+    const cartao = alvoMaisProximo(evento, "[data-stat-status]");
+    if (!cartao) return;
+
+    const escolhido = dado(cartao, "statStatus");
+    const atual = obterSecao("reunioes").status;
+    atualizarSecao("reunioes", { status: atual === escolhido ? "Todos" : escolhido });
+});
+
+grafico.addEventListener("click", (evento) => {
+    const barra = alvoMaisProximo(evento, "[data-grafico-dia]");
+    if (!barra) return;
+
+    const dia = dado(barra, "graficoDia");
+    const estado = obterSecao("reunioes");
+    const mesmoDia = estado.de === dia && estado.ate === dia;
+    atualizarSecao("reunioes", mesmoDia ? { de: "", ate: "" } : { de: dia, ate: dia });
 });
 
 porId("meetingViewToggle").addEventListener("click", (evento) => {
     const botao = alvoMaisProximo(evento, "[data-meeting-view]");
     if (botao) {
         atualizarSecao("reunioes", {
-            visualizacao: dado(botao, "meetingView") as VisualizacaoLista,
+            visualizacao: dado(botao, "meetingView") as VisualizacaoAgenda,
         });
     }
 });
@@ -365,6 +697,9 @@ porId("clearMeetingFilters").addEventListener("click", () => {
         tipo: "Todas",
         empresa: "Todas",
         status: "Todos",
+        responsavel: "Todos",
+        de: "",
+        ate: "",
     });
 });
 
@@ -520,6 +855,8 @@ function abrirFormularioDe(reuniao?: Reuniao): void {
 
 async function recarregar(): Promise<void> {
     ({ reunioes: meetingsData, empresas } = await carregarReunioes());
+    preencherOpcoes();
+    aplicarEstadoNosControles();
     renderReunioes();
 }
 
