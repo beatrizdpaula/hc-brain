@@ -27,6 +27,7 @@ export interface BuscaRecente {
 export type VisualizacaoDocumentos = "grid" | "list";
 export type VisualizacaoLista = "cards" | "list";
 export type VisualizacaoAgenda = VisualizacaoLista | "calendar";
+export type EscalaCalendario = "dia" | "4dias" | "semana" | "mes" | "ano";
 export type ModoSofia = "search" | "base";
 
 export interface EstadoPesquisa {
@@ -56,8 +57,13 @@ export interface EstadoReunioes {
     /** Fim do recorte, em AAAA-MM-DD. Vazio é "até a última reunião". */
     ate: string;
     visualizacao: VisualizacaoAgenda;
-    /** Mês exibido no calendário, no formato AAAA-MM; null usa o mês atual. */
-    mesCalendario: string | null;
+    /** Quanto tempo o calendário mostra de uma vez: um dia, quatro, uma semana, um mês ou o ano. */
+    escalaCalendario: EscalaCalendario;
+    /**
+     * Dia que ancora a janela do calendário, em AAAA-MM-DD; null é hoje. A
+     * escala decide o que da data importa: a semana que a contém, o mês, o ano.
+     */
+    ancoraCalendario: string | null;
 }
 
 export interface EstadoEmpresas {
@@ -143,7 +149,8 @@ const ESTADO_PADRAO: Estado = {
         de: "",
         ate: "",
         visualizacao: "list",
-        mesCalendario: null,
+        escalaCalendario: "mes",
+        ancoraCalendario: null,
     },
     empresas: { busca: "", visualizacao: "list" },
     usuarios: { busca: "", perfil: "Todos", status: "Todos" },

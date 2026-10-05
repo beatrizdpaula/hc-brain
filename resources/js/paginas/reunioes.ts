@@ -24,6 +24,7 @@ import {
     atualizarSecao,
     observarEstado,
     obterSecao,
+    type EscalaCalendario,
     type VisualizacaoAgenda,
 } from "../comum/estado.ts";
 import { dataCurta, escapar, mesPorExtenso, plural } from "../comum/formato.ts";
@@ -37,6 +38,8 @@ iniciarPagina("reunioes");
 const lista = porId("meetingsList");
 const grid = porId("meetingsGrid");
 const calendario = porId("meetingsCalendar");
+const escalaBotao = porId("meetingScaleButton");
+const escalaMenu = porId("meetingScaleMenu");
 const stats = porId("agendaStats");
 const grafico = porId("agendaGrafico");
 const intervalo = porId("agendaIntervalo");
@@ -430,44 +433,183 @@ interface CelulaCalendario {
     fora: boolean;
 }
 
-function mesSelecionado(): Date {
-    const { mesCalendario } = obterSecao("reunioes");
-    if (mesCalendario) {
-        const [ano, mes] = mesCalendario.split("-").map(Number);
-        return new Date(ano, mes - 1, 1);
+/* ---------------------------------------------------------
+   CALENDÁRIO
+   Cinco janelas sobre a mesma base. As de poucos dias são
+   colunas, e não uma grade de horas: reunião sem horário é a
+   regra aqui, e grade de horas deixaria a tela quase vazia.
+   --------------------------------------------------------- */
+const ROTULO_DA_ESCALA: Record<EscalaCalendario, string> = {
+    dia: "Dia",
+    "4dias": "4 dias",
+    semana: "Semana",
+    mes: "Mês",
+    ano: "Ano",
+};
+
+/** Quantos dias cada escala em colunas mostra de uma vez. */
+const DIAS_EM_COLUNAS: Record<string, number> = { dia: 1, "4dias": 4, semana: 7 };
+
+function escalaAtual(): EscalaCalendario {
+    return obterSecao("reunioes").escalaCalendario;
+}
+
+function meiaNoite(data: Date): Date {
+    const copia = new Date(data);
+    copia.setHours(0, 0, 0, 0);
+    return copia;
+}
+
+/** O dia que ancora a janela; o padrão é hoje. */
+function ancoraSelecionada(): Date {
+    const { ancoraCalendario } = obterSecao("reunioes");
+    if (ancoraCalendario) {
+        const [ano, mes, dia] = ancoraCalendario.split("-").map(Number);
+        return new Date(ano, mes - 1, dia);
     }
-    const hoje = new Date();
-    hoje.setDate(1);
-    return hoje;
+    return meiaNoite(new Date());
 }
 
-function guardarMes(data: Date): void {
-    atualizarSecao("reunioes", {
-        mesCalendario: `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`,
+function guardarAncora(data: Date): void {
+    atualizarSecao("reunioes", { ancoraCalendario: paraIso(data) });
+}
+
+/** A segunda-feira da semana que contém a data. */
+function segundaDaSemana(data: Date): Date {
+    const inicio = meiaNoite(data);
+    const desvio = (inicio.getDay() + 6) % 7;
+    inicio.setDate(inicio.getDate() - desvio);
+    return inicio;
+}
+
+/** Onde a janela começa, que depende da escala. */
+function inicioDaJanela(escala: EscalaCalendario, ancora: Date): Date {
+    if (escala === "semana") return segundaDaSemana(ancora);
+    if (escala === "mes") return new Date(ancora.getFullYear(), ancora.getMonth(), 1);
+    if (escala === "ano") return new Date(ancora.getFullYear(), 0, 1);
+    return meiaNoite(ancora);
+}
+
+/** Move a âncora uma janela inteira para trás ou para a frente. */
+function deslocarJanela(escala: EscalaCalendario, passos: number): void {
+    const proxima = inicioDaJanela(escala, ancoraSelecionada());
+
+    if (escala === "mes") {
+        proxima.setMonth(proxima.getMonth() + passos);
+    } else if (escala === "ano") {
+        proxima.setFullYear(proxima.getFullYear() + passos);
+    } else {
+        proxima.setDate(proxima.getDate() + DIAS_EM_COLUNAS[escala] * passos);
+    }
+
+    guardarAncora(proxima);
+}
+
+/** As reuniões de toda a base indexadas por dia, para o calendário consultar. */
+function reunioesPorDia(): Record<string, Reuniao[]> {
+    return meetingsData.reduce<Record<string, Reuniao[]>>((mapa, reuniao) => {
+        (mapa[reuniao.dataOrd] ||= []).push(reuniao);
+        return mapa;
+    }, {});
+}
+
+function tituloDaJanela(escala: EscalaCalendario, inicio: Date): string {
+    if (escala === "mes") {
+        // `toLocaleDateString` devolve "setembro de 2026"; com text-transform a
+        // preposição também virava maiúscula ("Setembro De 2026"), então o rótulo
+        // é montado com só a inicial do mês em caixa alta.
+        return mesPorExtenso(inicio);
+    }
+
+    if (escala === "ano") {
+        return String(inicio.getFullYear());
+    }
+
+    if (escala === "dia") {
+        const porExtenso = inicio.toLocaleDateString("pt-BR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        });
+        return porExtenso[0].toUpperCase() + porExtenso.slice(1);
+    }
+
+    const fim = new Date(inicio);
+    fim.setDate(fim.getDate() + DIAS_EM_COLUNAS[escala] - 1);
+    const mesmoMes = inicio.getMonth() === fim.getMonth();
+    const abre = inicio.toLocaleDateString(
+        "pt-BR",
+        mesmoMes ? { day: "numeric" } : { day: "numeric", month: "short" },
+    );
+    const fecha = fim.toLocaleDateString("pt-BR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
     });
+
+    return `${abre.replace(".", "")} a ${fecha}`;
 }
 
-function renderCalendario(): void {
-    const titulo = porId("calendarMonthTitle");
-    const dias = porId("calendarDays");
-    const referencia = mesSelecionado();
+/** Um evento clicável, igual nas colunas e no mês. */
+function renderEvento(reuniao: Reuniao): string {
+    const hora = reuniao.horario
+        ? escapar(reuniao.horario)
+        : `<span class="agenda-evento-sem-hora">Sem horário</span>`;
 
-    // `toLocaleDateString` devolve "setembro de 2026"; com text-transform a
-    // preposição também virava maiúscula ("Setembro De 2026"), então o rótulo
-    // é montado com só a inicial do mês em caixa alta.
-    titulo.textContent = mesPorExtenso(referencia);
-    dias.innerHTML = "";
+    return `
+    <button type="button" class="agenda-evento ${CLASSE_DO_STATUS[reuniao.status]}"
+            data-meeting-id="${reuniao.id}">
+      <span class="agenda-evento-hora">${hora}</span>
+      <strong>${escapar(reuniao.empresa)}</strong>
+      <span class="agenda-evento-tipo">${escapar(reuniao.tipo)}</span>
+    </button>`;
+}
 
-    const ano = referencia.getFullYear();
-    const mes = referencia.getMonth();
-    const primeiroDia = new Date(ano, mes, 1);
+/** Dia, 4 dias e semana: uma coluna por dia, reuniões empilhadas. */
+function renderColunas(escala: EscalaCalendario, inicio: Date, dias: HTMLElement): void {
+    const porDia = reunioesPorDia();
+    const hoje = meiaNoite(new Date());
+    const total = DIAS_EM_COLUNAS[escala];
+
+    dias.className = "calendar-days agenda-colunas";
+    dias.style.setProperty("--colunas", String(total));
+    dias.innerHTML = Array.from({ length: total }, (_, indice) => {
+        const data = new Date(inicio);
+        data.setDate(data.getDate() + indice);
+        const iso = paraIso(data);
+        const reunioes = porDia[iso] || [];
+        const ehHoje = data.getTime() === hoje.getTime();
+        const semana = data
+            .toLocaleDateString("pt-BR", { weekday: "short" })
+            .replace(".", "");
+
+        return `
+      <div class="agenda-coluna${ehHoje ? " hoje" : ""}">
+        <button type="button" class="agenda-coluna-cab" data-recortar-dia="${iso}">
+          <span>${semana}</span>
+          <strong>${data.getDate()}</strong>
+        </button>
+        <div class="agenda-coluna-corpo">
+          ${
+              reunioes.length
+                  ? reunioes.map(renderEvento).join("")
+                  : `<p class="agenda-coluna-vazia">Sem reuniões</p>`
+          }
+        </div>
+      </div>`;
+    }).join("");
+}
+
+/** Mês: a grade de sempre, com os dias vizinhos apagados nas pontas. */
+function renderMes(inicio: Date, dias: HTMLElement): void {
+    const ano = inicio.getFullYear();
+    const mes = inicio.getMonth();
     const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-    let indiceSegunda = primeiroDia.getDay() - 1;
-    if (indiceSegunda < 0) indiceSegunda = 6;
-
+    const indiceSegunda = (new Date(ano, mes, 1).getDay() + 6) % 7;
     const diasMesAnterior = new Date(ano, mes, 0).getDate();
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    const hoje = meiaNoite(new Date());
+    const porDia = reunioesPorDia();
 
     const celulas: CelulaCalendario[] = [];
     for (let i = indiceSegunda - 1; i >= 0; i--) {
@@ -485,41 +627,95 @@ function renderCalendario(): void {
         celulas.push({ dia, data: new Date(ano, mes + 1, dia), fora: true });
     }
 
-    const porDia = meetingsData.reduce<Record<string, Reuniao[]>>((mapa, reuniao) => {
-        (mapa[reuniao.dataOrd] ||= []).push(reuniao);
-        return mapa;
-    }, {});
+    dias.className = "calendar-days";
+    dias.style.removeProperty("--colunas");
+    dias.innerHTML = celulas
+        .map(({ dia, data, fora }) => {
+            const iso = paraIso(data);
+            const reunioes = porDia[iso] || [];
+            const classes = [
+                "calendar-day",
+                fora ? "muted-day" : "",
+                data.getTime() === hoje.getTime() ? "today" : "",
+            ]
+                .filter(Boolean)
+                .join(" ");
 
-    celulas.forEach(({ dia, data, fora }) => {
-        const iso = paraIso(data);
-        const reunioes = porDia[iso] || [];
-        const hojeMesmo = data.getTime() === hoje.getTime();
-
-        const celula = document.createElement("div");
-        celula.className = `calendar-day${fora ? " muted-day" : ""}${hojeMesmo ? " today" : ""}`;
-        celula.dataset.dateOrd = iso;
-        celula.innerHTML = `
-      <span class="calendar-day-number">${dia}</span>
-      ${reunioes
-          .slice(0, 3)
-          .map(
-              (reuniao) =>
-                  `<span class="calendar-meeting ${CLASSE_DO_STATUS[reuniao.status]}">${reuniao.horario || "—"} · ${escapar(reuniao.empresa)}</span>`,
-          )
-          .join("")}
-      ${reunioes.length > 3 ? `<span class="calendar-more">+${plural(reunioes.length - 3, "reunião", "reuniões")}</span>` : ""}
-    `;
-
-        if (!fora) {
             // Clicar num dia é o mesmo que recortar o período para ele: é o
             // caminho que a lista e o gráfico já entendem.
-            celula.addEventListener("click", () =>
-                atualizarSecao("reunioes", { de: iso, ate: iso, visualizacao: "list" }),
-            );
+            return `
+      <div class="${classes}"${fora ? "" : ` data-recortar-dia="${iso}"`}>
+        <span class="calendar-day-number">${dia}</span>
+        ${reunioes
+            .slice(0, 3)
+            .map(
+                (reuniao) =>
+                    `<span class="calendar-meeting ${CLASSE_DO_STATUS[reuniao.status]}">${reuniao.horario || "—"} · ${escapar(reuniao.empresa)}</span>`,
+            )
+            .join("")}
+        ${reunioes.length > 3 ? `<span class="calendar-more">+${plural(reunioes.length - 3, "reunião", "reuniões")}</span>` : ""}
+      </div>`;
+        })
+        .join("");
+}
+
+/** Ano: doze miniaturas, com os dias que têm reunião acesos. */
+function renderAno(inicio: Date, dias: HTMLElement): void {
+    const ano = inicio.getFullYear();
+    const hoje = meiaNoite(new Date());
+    const porDia = reunioesPorDia();
+
+    dias.className = "calendar-days agenda-ano";
+    dias.style.removeProperty("--colunas");
+    dias.innerHTML = Array.from({ length: 12 }, (_, mes) => {
+        const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+        const indiceSegunda = (new Date(ano, mes, 1).getDay() + 6) % 7;
+        let noMes = 0;
+
+        const celulas = Array.from({ length: indiceSegunda }, () => `<span></span>`);
+        for (let dia = 1; dia <= diasNoMes; dia++) {
+            const data = new Date(ano, mes, dia);
+            const reunioes = porDia[paraIso(data)] || [];
+            noMes += reunioes.length;
+            const classes = [
+                reunioes.length ? "com-reuniao" : "",
+                data.getTime() === hoje.getTime() ? "hoje" : "",
+            ]
+                .filter(Boolean)
+                .join(" ");
+            celulas.push(`<span class="${classes}">${dia}</span>`);
         }
 
-        dias.appendChild(celula);
-    });
+        return `
+      <button type="button" class="agenda-mini-mes" data-abrir-mes="${paraIso(new Date(ano, mes, 1))}">
+        <span class="agenda-mini-titulo">
+          <strong>${mesPorExtenso(new Date(ano, mes, 1)).split(" de ")[0]}</strong>
+          <small>${noMes ? plural(noMes, "reunião", "reuniões") : "—"}</small>
+        </span>
+        <span class="agenda-mini-grade">${celulas.join("")}</span>
+      </button>`;
+    }).join("");
+}
+
+function renderCalendario(): void {
+    const escala = escalaAtual();
+    const inicio = inicioDaJanela(escala, ancoraSelecionada());
+    const dias = porId("calendarDays");
+
+    porId("calendarMonthTitle").textContent = tituloDaJanela(escala, inicio);
+    porId("meetingScaleLabel").textContent =
+        obterSecao("reunioes").visualizacao === "calendar"
+            ? ROTULO_DA_ESCALA[escala]
+            : "Calendário";
+    porId("calendarWeekdays").classList.toggle("hidden-view", escala !== "mes");
+
+    if (escala === "mes") {
+        renderMes(inicio, dias);
+    } else if (escala === "ano") {
+        renderAno(inicio, dias);
+    } else {
+        renderColunas(escala, inicio, dias);
+    }
 }
 
 function renderReunioes(): void {
@@ -635,6 +831,12 @@ function aplicarEstadoNosControles(): void {
             botao.dataset.meetingView === estado.visualizacao,
         );
     });
+
+    todos("[data-escala]", escalaMenu).forEach((opcao) => {
+        const atual = opcao.dataset.escala === estado.escalaCalendario;
+        opcao.setAttribute("aria-checked", String(atual));
+        opcao.classList.toggle("atual", atual);
+    });
 }
 
 busca.addEventListener("input", () => atualizarSecao("reunioes", { busca: busca.value }));
@@ -684,7 +886,9 @@ grafico.addEventListener("click", (evento) => {
 
 porId("meetingViewToggle").addEventListener("click", (evento) => {
     const botao = alvoMaisProximo(evento, "[data-meeting-view]");
-    if (botao) {
+    // O botão do calendário é o único que não troca a visão direto: ele abre
+    // o menu de janelas, e é a janela escolhida que leva ao calendário.
+    if (botao && botao !== escalaBotao) {
         atualizarSecao("reunioes", {
             visualizacao: dado(botao, "meetingView") as VisualizacaoAgenda,
         });
@@ -703,21 +907,72 @@ porId("clearMeetingFilters").addEventListener("click", () => {
     });
 });
 
-porId("calendarPrev").addEventListener("click", () => {
-    const referencia = mesSelecionado();
-    referencia.setMonth(referencia.getMonth() - 1);
-    guardarMes(referencia);
+porId("calendarPrev").addEventListener("click", () => deslocarJanela(escalaAtual(), -1));
+porId("calendarNext").addEventListener("click", () => deslocarJanela(escalaAtual(), 1));
+porId("calendarToday").addEventListener("click", () =>
+    atualizarSecao("reunioes", { ancoraCalendario: null }),
+);
+
+// O calendário é redesenhado inteiro a cada mudança de estado, então os
+// cliques são ouvidos no contêiner, que esse sim é sempre o mesmo elemento.
+calendario.addEventListener("click", (evento) => {
+    const evt = alvoMaisProximo(evento, "[data-meeting-id]");
+    if (evt) {
+        const reuniao = meetingsData.find(
+            (registro) => registro.id === Number(dado(evt, "meetingId")),
+        );
+        if (reuniao) openMeetingModal(reuniao, () => abrirFormularioDe(reuniao));
+        return;
+    }
+
+    const mes = alvoMaisProximo(evento, "[data-abrir-mes]");
+    if (mes) {
+        atualizarSecao("reunioes", {
+            escalaCalendario: "mes",
+            ancoraCalendario: dado(mes, "abrirMes"),
+        });
+        return;
+    }
+
+    const dia = alvoMaisProximo(evento, "[data-recortar-dia]");
+    if (dia) {
+        const iso = dado(dia, "recortarDia");
+        atualizarSecao("reunioes", { de: iso, ate: iso, visualizacao: "list" });
+    }
 });
 
-porId("calendarNext").addEventListener("click", () => {
-    const referencia = mesSelecionado();
-    referencia.setMonth(referencia.getMonth() + 1);
-    guardarMes(referencia);
+/* ---------------------------------------------------------
+   MENU DAS JANELAS DO CALENDÁRIO
+   --------------------------------------------------------- */
+function abrirMenuDeEscala(aberto: boolean): void {
+    escalaMenu.hidden = !aberto;
+    escalaBotao.setAttribute("aria-expanded", String(aberto));
+}
+
+escalaBotao.addEventListener("click", (evento) => {
+    // O botão não troca de visão sozinho: escolher uma janela no menu é que
+    // leva ao calendário, e é um gesto só em vez de dois.
+    evento.stopPropagation();
+    abrirMenuDeEscala(escalaMenu.hidden);
 });
 
-porId("calendarToday").addEventListener("click", () => {
-    atualizarSecao("reunioes", { mesCalendario: null });
-    renderCalendario();
+escalaMenu.addEventListener("click", (evento) => {
+    const opcao = alvoMaisProximo(evento, "[data-escala]");
+    if (!opcao) return;
+
+    abrirMenuDeEscala(false);
+    atualizarSecao("reunioes", {
+        visualizacao: "calendar",
+        escalaCalendario: dado(opcao, "escala") as EscalaCalendario,
+    });
+});
+
+document.addEventListener("click", () => abrirMenuDeEscala(false));
+document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape" && !escalaMenu.hidden) {
+        abrirMenuDeEscala(false);
+        escalaBotao.focus();
+    }
 });
 
 /**

@@ -877,6 +877,259 @@
 }
 
 /* --------------------------------------------------------------------------
+   MENU DAS JANELAS DO CALENDÁRIO
+   O botão "Calendário" guarda cinco recortes de tempo. Eles saem num menu
+   ancorado ao grupo inteiro, não ao botão, para a borda direita do menu
+   alinhar com a do seletor de visões.
+   -------------------------------------------------------------------------- */
+.agenda-visoes-grupo {
+    position: relative;
+}
+
+.agenda-escala-seta {
+    margin-left: -2px;
+    opacity: 0.6;
+}
+
+.agenda-escala-menu {
+    position: absolute;
+    top: calc(100% + var(--esp-2));
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    padding: var(--esp-1);
+    border: 1px solid var(--border);
+    border-radius: var(--raio-md);
+    background: var(--surface);
+    box-shadow: var(--sombra-lg);
+}
+
+.agenda-escala-menu button {
+    padding: var(--esp-2) var(--esp-3);
+    border: 0;
+    border-radius: var(--raio-sm);
+    background: transparent;
+    color: var(--texto);
+    font-size: var(--texto-sm);
+    text-align: left;
+    transition: var(--transicao);
+}
+
+.agenda-escala-menu button:hover {
+    background: var(--surface-hover);
+}
+
+.agenda-escala-menu button.atual {
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+    font-weight: var(--peso-medio);
+}
+
+/* --------------------------------------------------------------------------
+   CALENDÁRIO EM COLUNAS (DIA, 4 DIAS E SEMANA)
+   Uma coluna por dia, com as reuniões empilhadas. Não é a grade de horas das
+   agendas tradicionais porque reunião sem horário é a regra nesta base: a
+   grade ficaria quase toda vazia, com tudo amontoado numa faixa de topo.
+   -------------------------------------------------------------------------- */
+.agenda-colunas {
+    grid-template-columns: repeat(var(--colunas, 7), minmax(0, 1fr));
+    min-height: 320px;
+}
+
+.agenda-coluna {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+}
+
+.agenda-coluna:last-child {
+    border-right: none;
+}
+
+.agenda-coluna.hoje {
+    background: var(--roxo-fundo);
+}
+
+.agenda-coluna-cab {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--esp-2);
+    padding: var(--esp-3) var(--esp-2);
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-alto);
+    color: var(--texto-suave);
+    font-size: var(--texto-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: var(--transicao);
+}
+
+.agenda-coluna-cab:hover {
+    color: var(--texto-forte);
+}
+
+.agenda-coluna-cab strong {
+    color: var(--texto-forte);
+    font-size: var(--texto-lg);
+    letter-spacing: -0.02em;
+}
+
+.agenda-coluna.hoje .agenda-coluna-cab {
+    background: transparent;
+    color: var(--roxo-claro);
+}
+
+.agenda-coluna.hoje .agenda-coluna-cab strong {
+    color: var(--roxo-claro);
+}
+
+.agenda-coluna-corpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--esp-2);
+    padding: var(--esp-2);
+}
+
+.agenda-coluna-vazia {
+    padding: var(--esp-4) 0;
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    text-align: center;
+}
+
+/* O evento usa a mesma faixa colorida à esquerda que a lista usa nas linhas,
+   para status se ler igual nas duas visões. */
+.agenda-evento {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--esp-2);
+    border: 0;
+    border-left: 3px solid var(--cor-linha, var(--border-forte));
+    border-radius: var(--raio-sm);
+    background: var(--surface-alto);
+    text-align: left;
+    transition: var(--transicao);
+}
+
+.agenda-evento:hover {
+    background: var(--surface-hover);
+}
+
+.agenda-evento.verde {
+    --cor-linha: var(--verde);
+}
+
+.agenda-evento.azul {
+    --cor-linha: var(--azul);
+}
+
+.agenda-evento.vermelho {
+    --cor-linha: var(--vermelho);
+}
+
+.agenda-evento strong {
+    overflow: hidden;
+    color: var(--texto-forte);
+    font-size: var(--texto-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.agenda-evento-hora {
+    color: var(--texto-suave);
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-forte);
+}
+
+.agenda-evento-sem-hora {
+    color: var(--texto-fraco);
+    font-weight: var(--peso-medio);
+}
+
+.agenda-evento-tipo {
+    overflow: hidden;
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   CALENDÁRIO DO ANO
+   Doze miniaturas lado a lado: o ano serve para achar onde houve movimento,
+   então o dia com reunião acende e o número exato fica para o mês.
+   -------------------------------------------------------------------------- */
+.agenda-ano {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    background: var(--border);
+}
+
+.agenda-mini-mes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--esp-2);
+    padding: var(--esp-3);
+    border: 0;
+    background: var(--surface);
+    text-align: left;
+    transition: var(--transicao);
+}
+
+.agenda-mini-mes:hover {
+    background: var(--surface-hover);
+}
+
+.agenda-mini-titulo {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--esp-2);
+}
+
+.agenda-mini-titulo strong {
+    color: var(--texto-forte);
+    font-size: var(--texto-sm);
+}
+
+.agenda-mini-titulo small {
+    color: var(--texto-fraco);
+    font-size: var(--texto-xs);
+}
+
+.agenda-mini-grade {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.agenda-mini-grade span {
+    display: grid;
+    aspect-ratio: 1;
+    border-radius: var(--raio-sm);
+    color: var(--texto-fraco);
+    font-size: 10px;
+    place-items: center;
+}
+
+.agenda-mini-grade span.com-reuniao {
+    background: var(--roxo-fundo);
+    color: var(--roxo-claro);
+    font-weight: var(--peso-forte);
+}
+
+.agenda-mini-grade span.hoje {
+    outline: 1px solid var(--roxo);
+}
+
+/* --------------------------------------------------------------------------
    RESPONSIVO
    -------------------------------------------------------------------------- */
 @media (max-width: 1100px) {
@@ -930,6 +1183,13 @@
 
     .agenda-seta {
         display: none;
+    }
+
+    /* Sete colunas não cabem num celular. Em vez de espremê-las a ponto de
+       nenhum nome de empresa aparecer, a semana passa a rolar na horizontal. */
+    .agenda-colunas {
+        grid-template-columns: repeat(var(--colunas, 7), minmax(132px, 1fr));
+        overflow-x: auto;
     }
 }
 

@@ -133,16 +133,40 @@
           </button>
         </p>
 
-        <div class="view-toggle agenda-visoes" id="meetingViewToggle">
-          <button type="button" class="active" data-meeting-view="list">
-            <i data-lucide="list"></i> Lista
-          </button>
-          <button type="button" data-meeting-view="cards">
-            <i data-lucide="layout-grid"></i> Cards
-          </button>
-          <button type="button" data-meeting-view="calendar">
-            <i data-lucide="calendar-days"></i> Calendário
-          </button>
+        {{--
+          O calendário é um botão só, mas com cinco janelas possíveis. Elas
+          saem num menu em vez de virarem cinco segmentos, que não caberiam
+          ao lado de Lista e Cards.
+        --}}
+        <div class="agenda-visoes-grupo">
+          <div class="view-toggle agenda-visoes" id="meetingViewToggle">
+            <button type="button" class="active" data-meeting-view="list">
+              <i data-lucide="list"></i> Lista
+            </button>
+            <button type="button" data-meeting-view="cards">
+              <i data-lucide="layout-grid"></i> Cards
+            </button>
+            <button
+              type="button"
+              id="meetingScaleButton"
+              data-meeting-view="calendar"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-controls="meetingScaleMenu"
+            >
+              <i data-lucide="calendar-days"></i>
+              <span id="meetingScaleLabel">Calendário</span>
+              <i data-lucide="chevron-down" class="agenda-escala-seta"></i>
+            </button>
+          </div>
+
+          <div class="agenda-escala-menu" id="meetingScaleMenu" role="menu" hidden>
+            <button type="button" role="menuitemradio" data-escala="dia">Dia</button>
+            <button type="button" role="menuitemradio" data-escala="4dias">4 dias</button>
+            <button type="button" role="menuitemradio" data-escala="semana">Semana</button>
+            <button type="button" role="menuitemradio" data-escala="mes">Mês</button>
+            <button type="button" role="menuitemradio" data-escala="ano">Ano</button>
+          </div>
         </div>
       </div>
 
@@ -154,14 +178,15 @@
 
       <div class="agenda-calendario hidden-view" id="meetingsCalendar">
         <div class="meetings-calendar-head">
-          <button type="button" class="icon-button" id="calendarPrev" aria-label="Mês anterior"><i data-lucide="chevron-left"></i></button>
+          <button type="button" class="icon-button" id="calendarPrev" aria-label="Período anterior"><i data-lucide="chevron-left"></i></button>
           <div class="calendar-month-title">
             <strong id="calendarMonthTitle">—</strong>
             <button type="button" class="secondary calendar-today" id="calendarToday">Hoje</button>
           </div>
-          <button type="button" class="icon-button" id="calendarNext" aria-label="Próximo mês"><i data-lucide="chevron-right"></i></button>
+          <button type="button" class="icon-button" id="calendarNext" aria-label="Próximo período"><i data-lucide="chevron-right"></i></button>
         </div>
-        <div class="calendar-weekdays" aria-hidden="true">
+        {{-- A régua de dias da semana só faz sentido sobre a grade do mês. --}}
+        <div class="calendar-weekdays" id="calendarWeekdays" aria-hidden="true">
           <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span>
           <span>Sex</span><span>Sáb</span><span>Dom</span>
         </div>
