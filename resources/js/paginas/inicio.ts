@@ -11,7 +11,7 @@ import {
     type ItemDeAtividade,
 } from "../dados/projetos.ts";
 import type { CorTag } from "../dados/empresas.ts";
-import { campo, dado, porId, todos } from "../comum/dom.ts";
+import { campo, dado, enviarComEnter, porId, todos } from "../comum/dom.ts";
 import { atualizarSecao } from "../comum/estado.ts";
 import { escapar, numero } from "../comum/formato.ts";
 import { desenharIcones, icone, type NomeDeIcone } from "../comum/icones.ts";
@@ -188,11 +188,15 @@ function pesquisar(termo: string): void {
     window.location.href = caminhoDaPagina("pesquisa");
 }
 
-porId<HTMLFormElement>("heroSearchForm").addEventListener("submit", (evento) => {
+const buscaDoHero = porId<HTMLFormElement>("heroSearchForm");
+
+buscaDoHero.addEventListener("submit", (evento) => {
     evento.preventDefault();
     const termo = campo("heroSearchInput").value.trim();
     if (termo) pesquisar(termo);
 });
+
+enviarComEnter(campo("heroSearchInput"), buscaDoHero);
 
 // A navegação só pinta a outra tela alguns instantes depois do clique. Sem
 // marcar a pílula escolhida, ela fica parada no estado de foco do navegador e

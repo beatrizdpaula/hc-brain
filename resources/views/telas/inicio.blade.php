@@ -17,14 +17,16 @@
         históricos e demais fontes que alimentam a memória da empresa HC.
       </p>
 
-      <form class="hero-search" id="heroSearchForm" role="search">
-        <label class="sr-only" for="heroSearchInput">Pesquisar na memória da HC</label>
-        <span class="hero-search-icon"><i data-lucide="search"></i></span>
-        <input
-          id="heroSearchInput"
-          autocomplete="off"
-          placeholder="Pergunte à Sofia ou encontre qualquer informação..."
-        />
+      <form class="busca-com-acao hero-busca" id="heroSearchForm" role="search">
+        <div class="hero-search">
+          <label class="sr-only" for="heroSearchInput">Pesquisar na memória da HC</label>
+          <span class="hero-search-icon"><i data-lucide="search"></i></span>
+          <input
+            id="heroSearchInput"
+            autocomplete="off"
+            placeholder="Pergunte à Sofia ou encontre qualquer informação..."
+          />
+        </div>
         <button class="primary" type="submit">Pesquisar</button>
       </form>
 

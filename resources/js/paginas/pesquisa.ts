@@ -11,7 +11,7 @@ import {
     type ResultadoPesquisa,
 } from "../dados/pesquisa.ts";
 import { combina, termoDeBusca } from "../comum/busca.ts";
-import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
+import { campo, dado, enviarComEnter, porId, selecao, todos } from "../comum/dom.ts";
 import { atualizarSecao, observarEstado, obterSecao } from "../comum/estado.ts";
 import { escapar, plural } from "../comum/formato.ts";
 import { desenharIcones, icone } from "../comum/icones.ts";
@@ -202,11 +202,15 @@ function registrarBusca(termo: string): void {
     }));
 }
 
-porId<HTMLFormElement>("advancedSearchForm").addEventListener("submit", (evento) => {
+const formulario = porId<HTMLFormElement>("advancedSearchForm");
+
+formulario.addEventListener("submit", (evento) => {
     evento.preventDefault();
     atualizarSecao("pesquisa", { termo: entrada.value });
     registrarBusca(entrada.value);
 });
+
+enviarComEnter(entrada, formulario);
 
 entrada.addEventListener("input", () =>
     atualizarSecao("pesquisa", { termo: entrada.value }),

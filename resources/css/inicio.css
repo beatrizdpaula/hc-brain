@@ -44,13 +44,18 @@
 /* --------------------------------------------------------------------------
    BUSCA DO HERO
    -------------------------------------------------------------------------- */
+/* A largura e o respiro valem para o conjunto campo + botão, não só para a
+   moldura do campo. */
+.hero-busca {
+    max-width: 720px;
+    margin-top: var(--esp-6);
+}
+
 .hero-search {
     display: flex;
     align-items: center;
     gap: var(--esp-2);
-    max-width: 720px;
     padding: var(--esp-2);
-    margin-top: var(--esp-6);
     border: 1px solid var(--border);
     border-radius: var(--raio-lg);
     background: var(--surface-alto);
@@ -89,10 +94,6 @@
    deixaria duas linhas na mesma caixa. */
 .hero-search input:focus-visible {
     box-shadow: none;
-}
-
-.hero-search .primary {
-    height: 40px;
 }
 
 .quick {
@@ -227,13 +228,5 @@
 
     .hero {
         padding: var(--esp-6);
-    }
-
-    .hero-search {
-        flex-wrap: wrap;
-    }
-
-    .hero-search .primary {
-        width: 100%;
     }
 }

@@ -33,11 +33,6 @@
     text-transform: uppercase;
 }
 
-.advanced-search .search-submit {
-    flex: 0 0 auto;
-    height: 38px;
-}
-
 /* --------------------------------------------------------------------------
    FILTROS E RESULTADOS
    -------------------------------------------------------------------------- */
@@ -189,11 +184,6 @@
 
 @media (max-width: 550px) {
     .advanced-search {
-        flex-wrap: wrap;
         padding: var(--esp-3);
-    }
-
-    .advanced-search .search-submit {
-        width: 100%;
     }
 }

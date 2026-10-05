@@ -22,16 +22,18 @@
     </div>
 
     <div class="research-box">
-      <form class="advanced-search" id="advancedSearchForm" role="search">
-        <span class="search-icon"><i data-lucide="search"></i></span>
-        <label class="sr-only" for="advancedSearchInput">Termo da pesquisa</label>
-        <input
-          id="advancedSearchInput"
-          autocomplete="off"
-          placeholder="Pesquise por nome, palavra-chave, documento ou pergunta..."
-        />
-        {{-- Só aparece quando há o que limpar; o script cuida disso. --}}
-        <button type="button" class="icon-button" id="clearSearch" aria-label="Limpar pesquisa" hidden><i data-lucide="x"></i></button>
+      <form class="busca-com-acao" id="advancedSearchForm" role="search">
+        <div class="advanced-search">
+          <span class="search-icon"><i data-lucide="search"></i></span>
+          <label class="sr-only" for="advancedSearchInput">Termo da pesquisa</label>
+          <input
+            id="advancedSearchInput"
+            autocomplete="off"
+            placeholder="Pesquise por nome, palavra-chave, documento ou pergunta..."
+          />
+          {{-- Só aparece quando há o que limpar; o script cuida disso. --}}
+          <button type="button" class="icon-button" id="clearSearch" aria-label="Limpar pesquisa" hidden><i data-lucide="x"></i></button>
+        </div>
         <button type="submit" class="primary search-submit">Pesquisar</button>
       </form>
 

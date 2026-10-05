@@ -632,12 +632,40 @@ a.card {
     outline: none;
 }
 
-/* Quem marca o foco aqui é a moldura inteira, com ícone e botão dentro. O
-   anel geral de :focus-visible desenharia um segundo contorno em volta só do
+/* Quem marca o foco aqui é a moldura inteira, com o ícone dentro. O anel
+   geral de :focus-visible desenharia um segundo contorno em volta só do
    campo, sobrando uma linha que não fecha a caixa. */
 .advanced-search input:focus-visible,
 .document-search input:focus-visible {
     box-shadow: none;
+}
+
+/* --------------------------------------------------------------------------
+   BUSCA COM BOTÃO AO LADO
+   O botão "Pesquisar" fica fora da moldura do campo. Dentro dela ele lia
+   como parte da barra, e a barra passava a ter duas bordas concorrentes: a
+   do campo e a do botão colado nela.
+   -------------------------------------------------------------------------- */
+.busca-com-acao {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+}
+
+/* O primeiro filho é a moldura do campo; o botão vem depois e guarda a
+   largura que o texto dele pede. */
+.busca-com-acao > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* A altura vem da moldura ao lado em vez de um número fixo: o campo da
+   Pesquisa e o do Início têm alturas diferentes, e os dois precisam fechar
+   na mesma linha de base do botão. */
+.busca-com-acao > button {
+    flex: 0 0 auto;
+    align-self: stretch;
+    height: auto;
 }
 
 .document-search {
@@ -771,6 +799,17 @@ a.card {
     .documents-grid,
     .folders {
         grid-template-columns: 1fr;
+    }
+
+    /* Lado a lado, o campo ficaria estreito demais para ler o que se digita. */
+    .busca-com-acao {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Empilhado, não há moldura ao lado de quem copiar a altura. */
+    .busca-com-acao > button {
+        height: 40px;
     }
 
     .page-header-actions .primary,

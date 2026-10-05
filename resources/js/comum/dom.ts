@@ -55,3 +55,23 @@ export function alvoMaisProximo<T extends HTMLElement = HTMLElement>(
 ): T | null {
     return evento.target instanceof Element ? evento.target.closest<T>(seletor) : null;
 }
+
+/**
+ * Faz o Enter dentro do campo enviar o formulário.
+ *
+ * O navegador já faria isso sozinho, mas só sob condições que mudam conforme
+ * o formulário: depende de haver um botão de envio visível e habilitado, e de
+ * nada ter engolido a tecla antes. Como o botão "Pesquisar" dessas caixas
+ * pode aparecer e sumir no responsivo, o envio fica declarado aqui, e aí a
+ * tecla vale em qualquer arranjo.
+ */
+export function enviarComEnter(
+    entrada: HTMLInputElement,
+    formulario: HTMLFormElement,
+): void {
+    entrada.addEventListener("keydown", (evento) => {
+        if (evento.key !== "Enter") return;
+        evento.preventDefault();
+        formulario.requestSubmit();
+    });
+}
