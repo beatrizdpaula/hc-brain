@@ -15,6 +15,7 @@ import {
     type ConteudoTreinamento,
     type DadosDeTreinamento,
 } from "../dados/treinamentos.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import { atualizarSecao, observarEstado, obterSecao } from "../comum/estado.ts";
 import { escapar, plural } from "../comum/formato.ts";
@@ -127,13 +128,12 @@ async function abrirFormularioDe(item?: ConteudoTreinamento): Promise<void> {
 
 function conteudosFiltrados(): ConteudoTreinamento[] {
     const estado = obterSecao("treinamentos");
-    const termo = estado.busca.toLowerCase().trim();
+    const palavras = termoDeBusca(estado.busca);
 
     return treinamentoData.filter((item) => {
-        const texto =
-            `${item.titulo} ${item.descricao} ${item.categoria} ${item.tipo} ${item.processo ?? ""} ${item.trilha ?? ""}`.toLowerCase();
+        const texto = `${item.titulo} ${item.descricao} ${item.categoria} ${item.tipo} ${item.processo ?? ""} ${item.trilha ?? ""}`;
         return (
-            (!termo || texto.includes(termo)) &&
+            combina(texto, palavras) &&
             (estado.tipo === "Todos" || item.tipo === estado.tipo) &&
             (estado.nivel === "Todos" ||
                 item.nivel === "Todos" ||

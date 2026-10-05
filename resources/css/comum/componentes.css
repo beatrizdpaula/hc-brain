@@ -259,8 +259,13 @@ a.card {
 /* --------------------------------------------------------------------------
    TABELAS
    -------------------------------------------------------------------------- */
+/* Abaixo de 720px a tabela rola aqui dentro, e só aqui. Sem a contenção, a
+   largura que o conteúdo pede além desse piso — e-mails longos na tela de
+   Usuários, por exemplo — escapa da caixa e arrasta a página inteira para o
+   lado, abrindo uma faixa vazia à direita de tudo. */
 .tabela-wrap {
     overflow-x: auto;
+    contain: paint;
 }
 
 .tabela {

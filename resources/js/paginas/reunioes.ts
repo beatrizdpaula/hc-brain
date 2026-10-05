@@ -18,6 +18,7 @@ import {
     type Reuniao,
     type StatusReuniao,
 } from "../dados/reunioes.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { alvoMaisProximo, campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import {
     atualizarSecao,
@@ -108,7 +109,7 @@ function paraIso(data: Date): string {
    --------------------------------------------------------- */
 function recorte(): Reuniao[] {
     const estado = obterSecao("reunioes");
-    const termo = estado.busca.toLowerCase().trim();
+    const palavras = termoDeBusca(estado.busca);
 
     return meetingsData
         .filter((reuniao) => estado.tipo === "Todas" || reuniao.tipo === estado.tipo)
@@ -122,19 +123,18 @@ function recorte(): Reuniao[] {
         )
         .filter((reuniao) => !estado.de || reuniao.dataOrd >= estado.de)
         .filter((reuniao) => !estado.ate || reuniao.dataOrd <= estado.ate)
-        .filter((reuniao) => {
-            if (!termo) return true;
-            const texto = [
-                reuniao.empresa,
-                reuniao.tipo,
-                reuniao.resumo,
-                reuniao.responsavel,
-                reuniao.participantes.join(" "),
-            ]
-                .join(" ")
-                .toLowerCase();
-            return texto.includes(termo);
-        })
+        .filter((reuniao) =>
+            combina(
+                [
+                    reuniao.empresa,
+                    reuniao.tipo,
+                    reuniao.resumo,
+                    reuniao.responsavel,
+                    reuniao.participantes.join(" "),
+                ].join(" "),
+                palavras,
+            ),
+        )
         .sort((a, b) => (a.dataOrd < b.dataOrd ? 1 : -1));
 }
 

@@ -11,6 +11,7 @@ import {
     corDoRegime,
     type LinhaCarteira,
 } from "../dados/empresas.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { campo, porId, selecao } from "../comum/dom.ts";
 import { atualizarSecao, observarEstado, obterSecao } from "../comum/estado.ts";
 import { escapar, duracaoEmMeses, moeda, plural } from "../comum/formato.ts";
@@ -27,12 +28,12 @@ const carteira = await carregarCarteira();
 
 function linhas(): LinhaCarteira[] {
     const estado = obterSecao("financeiro");
-    const termo = estado.busca.toLowerCase().trim();
+    const palavras = termoDeBusca(estado.busca);
 
     return carteira.filter((item) => {
-        const texto = `${item.nome} ${item.setor} ${item.socio}`.toLowerCase();
+        const texto = `${item.nome} ${item.setor} ${item.socio}`;
         return (
-            (!termo || texto.includes(termo)) &&
+            combina(texto, palavras) &&
             (estado.regime === "Todos" || item.regime === estado.regime)
         );
     });

@@ -31,6 +31,7 @@ import {
     type ConversaSofia,
     type MensagemSofia,
 } from "../dados/sofia.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import {
     alvoMaisProximo,
     campo,
@@ -445,14 +446,14 @@ function previaDa(conversa: ConversaSofia): string {
 
 function renderHistorico(): void {
     const { conversaAtiva, conversas } = obterSecao("sofia");
-    const termo = buscaChats.value.trim().toLowerCase();
+    const palavras = termoDeBusca(buscaChats.value);
     const ordem = [...conversas]
         .sort((a, b) => b.atualizadoEm - a.atualizadoEm)
-        .filter((conversa) => conversa.titulo.toLowerCase().includes(termo));
+        .filter((conversa) => combina(conversa.titulo, palavras));
 
     if (!ordem.length) {
         lista.innerHTML = `<p class="sofia-historico-vazio">${
-            termo ? "Nenhum chat com esse nome." : "Nenhum chat ainda."
+            palavras.length ? "Nenhum chat com esse nome." : "Nenhum chat ainda."
         }</p>`;
         return;
     }

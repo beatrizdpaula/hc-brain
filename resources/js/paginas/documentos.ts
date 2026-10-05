@@ -20,6 +20,7 @@ import {
     type Documento,
     type Pasta,
 } from "../dados/documentos.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { alvoMaisProximo, campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import {
     atualizarSecao,
@@ -65,11 +66,11 @@ async function recarregar(): Promise<void> {
 
 function documentosFiltrados(): Documento[] {
     const estado = obterSecao("documentos");
-    const termo = estado.busca.toLowerCase().trim();
+    const palavras = termoDeBusca(estado.busca);
 
     const filtrados = documentos.filter(
         (item) =>
-            (!termo || item.nome.toLowerCase().includes(termo)) &&
+            combina(item.nome, palavras) &&
             (estado.tipo === "all" || item.tipo === estado.tipo) &&
             (ordem === "recentes" ||
                 estado.pasta === TODAS_AS_PASTAS ||

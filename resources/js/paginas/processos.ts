@@ -13,6 +13,7 @@ import {
     type DadosDeProcesso,
     type Processo,
 } from "../dados/projetos.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import { escapar, plural } from "../comum/formato.ts";
 import { abrirFormulario } from "../comum/formulario.ts";
@@ -121,13 +122,12 @@ async function recarregar(): Promise<void> {
 }
 
 function processosFiltrados(): Processo[] {
-    const termo = busca.value.toLowerCase().trim();
+    const palavras = termoDeBusca(busca.value);
 
     return processos.filter((processo) => {
-        const texto =
-            `${processo.nome} ${processo.descricao} ${processo.responsavel} ${processo.etapas.join(" ")}`.toLowerCase();
+        const texto = `${processo.nome} ${processo.descricao} ${processo.responsavel} ${processo.etapas.join(" ")}`;
         return (
-            (!termo || texto.includes(termo)) &&
+            combina(texto, palavras) &&
             (areaFiltro.value === "Todas" || processo.area === areaFiltro.value)
         );
     });

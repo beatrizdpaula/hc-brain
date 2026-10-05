@@ -18,6 +18,7 @@ import {
     type Projeto,
 } from "../dados/projetos.ts";
 import { carregarEmpresas, type CorTag } from "../dados/empresas.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import { dataCurta, escapar, plural } from "../comum/formato.ts";
 import { abrirFormulario } from "../comum/formulario.ts";
@@ -193,13 +194,12 @@ async function recarregar(): Promise<void> {
 }
 
 function projetosFiltrados(): Projeto[] {
-    const termo = busca.value.toLowerCase().trim();
+    const palavras = termoDeBusca(busca.value);
 
     return projetos.filter((projeto) => {
-        const texto =
-            `${projeto.nome} ${projeto.descricao} ${projeto.responsavel} ${projeto.empresa ?? ""}`.toLowerCase();
+        const texto = `${projeto.nome} ${projeto.descricao} ${projeto.responsavel} ${projeto.empresa ?? ""}`;
         return (
-            (!termo || texto.includes(termo)) &&
+            combina(texto, palavras) &&
             (statusFiltro.value === "Todos" || projeto.status === statusFiltro.value) &&
             (areaFiltro.value === "Todas" || projeto.area === areaFiltro.value)
         );

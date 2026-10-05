@@ -6,6 +6,7 @@
    ========================================================= */
 
 import { carregarEmpresas, type Empresa } from "../dados/empresas.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { alvoMaisProximo, campo, dado, porId, todos } from "../comum/dom.ts";
 import {
     atualizarSecao,
@@ -28,11 +29,10 @@ const busca = campo("empresaSearch");
 const empresas = await carregarEmpresas();
 
 function empresasFiltradas(): Empresa[] {
-    const termo = obterSecao("empresas").busca.toLowerCase().trim();
+    const palavras = termoDeBusca(obterSecao("empresas").busca);
     return empresas.filter((empresa) => {
-        const texto =
-            `${empresa.nome} ${empresa.setor} ${empresa.socio.nome} ${empresa.status}`.toLowerCase();
-        return !termo || texto.includes(termo);
+        const texto = `${empresa.nome} ${empresa.setor} ${empresa.socio.nome} ${empresa.status}`;
+        return combina(texto, palavras);
     });
 }
 

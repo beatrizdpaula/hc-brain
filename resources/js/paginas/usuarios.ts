@@ -12,6 +12,7 @@ import {
     salvarUsuario,
     type Usuario,
 } from "../dados/usuarios.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import { atualizarSecao, observarEstado, obterSecao } from "../comum/estado.ts";
 import { escapar, plural } from "../comum/formato.ts";
@@ -41,13 +42,12 @@ let usuarios: Usuario[] = await carregarUsuarios();
 
 function renderUsuarios(): void {
     const estado = obterSecao("usuarios");
-    const termo = estado.busca.toLowerCase().trim();
+    const palavras = termoDeBusca(estado.busca);
 
     const filtrados = usuarios.filter((usuario) => {
-        const texto =
-            `${usuario.nome} ${usuario.email} ${usuario.area} ${usuario.perfil}`.toLowerCase();
+        const texto = `${usuario.nome} ${usuario.email} ${usuario.area} ${usuario.perfil}`;
         return (
-            (!termo || texto.includes(termo)) &&
+            combina(texto, palavras) &&
             (estado.perfil === "Todos" || usuario.perfil === estado.perfil) &&
             (estado.status === "Todos" || usuario.status === estado.status)
         );

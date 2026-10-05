@@ -10,6 +10,7 @@ import {
     scopeToType,
     type ResultadoPesquisa,
 } from "../dados/pesquisa.ts";
+import { combina, termoDeBusca } from "../comum/busca.ts";
 import { campo, dado, porId, selecao, todos } from "../comum/dom.ts";
 import { atualizarSecao, observarEstado, obterSecao } from "../comum/estado.ts";
 import { escapar, plural } from "../comum/formato.ts";
@@ -48,14 +49,14 @@ function dataDoItem(item: ResultadoPesquisa): Date | null {
 
 function filtrar(): ResultadoPesquisa[] {
     const { termo, escopo, tipo, area, periodo } = obterSecao("pesquisa");
-    const busca = termo.toLowerCase().trim();
+    const palavras = termoDeBusca(termo);
 
     const inicioSemana = new Date(HOJE);
     inicioSemana.setDate(HOJE.getDate() - HOJE.getDay());
     const inicioMes = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
 
     return researchData.filter((item) => {
-        const texto = (item.title + item.text + item.type + item.area).toLowerCase();
+        const texto = [item.title, item.text, item.type, item.area].join(" ");
         const data = dataDoItem(item);
 
         let periodoOk = true;
@@ -69,7 +70,7 @@ function filtrar(): ResultadoPesquisa[] {
         }
 
         return (
-            (!busca || texto.includes(busca)) &&
+            combina(texto, palavras) &&
             (tipo === "Tudo" || item.type === tipo) &&
             (area === "Todas" || item.area === area) &&
             (escopo === "Tudo" || item.type === scopeToType[escopo]) &&
