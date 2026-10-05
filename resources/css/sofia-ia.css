@@ -454,6 +454,29 @@
     display: block;
 }
 
+/* A barra de rolagem da conversa só aparece quando o chat está em uso. Parada
+   no canto de uma coluna estreita, ela se lê como um traço solto por cima do
+   texto em vez de um controle. O espaço dela segue reservado, então nada
+   desloca quando ela surge. */
+.chat {
+    scrollbar-color: transparent transparent;
+}
+
+.chat:hover,
+.chat:focus-within {
+    scrollbar-color: var(--border-forte) transparent;
+}
+
+.chat::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+.chat:hover::-webkit-scrollbar-thumb,
+.chat:focus-within::-webkit-scrollbar-thumb {
+    background: var(--border-forte);
+    background-clip: padding-box;
+}
+
 .message {
     display: flex;
     max-width: 100%;
