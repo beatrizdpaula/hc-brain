@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * Entidade principal do banco: cada empresa tem um sócio responsável, fontes
  * vinculadas diretamente a ela e as reuniões do relacionamento.
  */
-#[Fillable(['id', 'nome', 'setor', 'status', 'status_tag'])]
+#[Fillable(['id', 'automacao_id', 'nome', 'setor', 'status', 'status_tag'])]
 class Empresa extends Model
 {
     protected $table = 'empresas';
@@ -37,6 +37,15 @@ class Empresa extends Model
     public function reunioes(): HasMany
     {
         return $this->hasMany(Reuniao::class)->orderByDesc('data');
+    }
+
+    /**
+     * Só a reunião mais recente, para a lista de clientes: carregar todas as
+     * reuniões de toda a carteira para mostrar uma por empresa pesa à toa.
+     */
+    public function ultimaReuniao(): HasOne
+    {
+        return $this->hasOne(Reuniao::class)->ofMany(['data' => 'max', 'id' => 'max']);
     }
 
     public function financeiro(): HasOne

@@ -99,6 +99,23 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        // Banco do automacao-2-hc, de onde o `hc:sincronizar-empresas` lê as
+        // empresas. O usuário daqui só tem SELECT nas colunas que o comando usa.
+        'automacao' => [
+            'driver' => 'pgsql',
+            'url' => env('AUTOMACAO_DB_URL'),
+            'host' => env('AUTOMACAO_DB_HOST', '127.0.0.1'),
+            'port' => env('AUTOMACAO_DB_PORT', '5432'),
+            'database' => env('AUTOMACAO_DB_DATABASE', 'automacao_hc_2_database_PRD'),
+            'username' => env('AUTOMACAO_DB_USERNAME', 'hc_brain_leitura'),
+            'password' => env('AUTOMACAO_DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('AUTOMACAO_DB_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

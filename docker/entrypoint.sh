@@ -22,5 +22,10 @@ php artisan migrate --force
 # Semeia só se a base estiver vazia e garante o acesso inicial do ambiente.
 php artisan hc:preparar
 
+# O agendador (sincronização de empresas, de hora em hora) roda ao lado do
+# Apache e como o mesmo usuário dele, para que o que ele grava em storage
+# continue acessível ao site.
+runuser -u www-data -- php artisan schedule:work &
+
 # Inicia o servidor Apache
 exec apache2-foreground
