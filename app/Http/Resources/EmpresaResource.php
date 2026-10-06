@@ -8,8 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A empresa como a lista de clientes precisa dela: cadastro, sócio, fontes e
- * o total de reuniões, que aparece no cartão sem exigir uma segunda chamada.
+ * A empresa como a lista de clientes precisa dela: cadastro, sócio e os totais
+ * de reuniões e fontes, que aparecem no cartão sem exigir uma segunda chamada.
+ * A lista das fontes só vai quando foi carregada — no detalhe e no cadastro —,
+ * porque a carteira inteira com todas as fontes pesa sem ninguém olhar.
  *
  * @mixin Empresa
  */
@@ -31,20 +33,17 @@ class EmpresaResource extends JsonResource
                 'participacao' => $this->socio->participacao,
                 'desde' => $this->socio->desde,
             ],
-            'fontes' => $this->fontes->map(fn (Fonte $fonte) => [
+            'fontes' => $this->whenLoaded('fontes', fn () => $this->fontes->map(fn (Fonte $fonte) => [
                 'tipo' => $fonte->tipo,
                 'nome' => $fonte->nome,
                 'info' => $fonte->info,
-            ])->all(),
+            ])->all()),
+            'totalFontes' => $this->fontes_count ?? $this->fontes()->count(),
             'totalReunioes' => $this->reunioes_count ?? $this->reunioes()->count(),
-            'ultimaReuniao' => $this->whenLoaded('reunioes', function () {
-                $ultima = $this->reunioes->first();
-
-                return $ultima === null ? null : [
-                    'tipo' => $ultima->tipo,
-                    'data' => $ultima->data->format('d/m/Y'),
-                ];
-            }),
+            'ultimaReuniao' => $this->whenLoaded('ultimaReuniao', fn () => $this->ultimaReuniao === null ? null : [
+                'tipo' => $this->ultimaReuniao->tipo,
+                'data' => $this->ultimaReuniao->data->format('d/m/Y'),
+            ]),
         ];
     }
 }

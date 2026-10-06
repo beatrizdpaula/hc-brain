@@ -33,11 +33,18 @@ export function termoDeBusca(termo: string): string[] {
  * Termo vazio casa com tudo, que é o estado de "sem filtro".
  */
 export function combina(texto: string, palavras: string[]): boolean {
-    if (!palavras.length) {
-        return true;
-    }
+    return combinaPreparado(textoDeBusca(texto), palavras);
+}
 
-    const alvo = dobrar(texto);
+/**
+ * Prepara o texto de um registro uma vez só. Numa lista com milhares de
+ * registros, normalizar cada um a cada tecla é o que faz a busca engasgar.
+ */
+export function textoDeBusca(texto: string): string {
+    return dobrar(texto);
+}
 
+/** Como `combina`, sobre um texto já preparado por `textoDeBusca`. */
+export function combinaPreparado(alvo: string, palavras: string[]): boolean {
     return palavras.every((palavra) => alvo.includes(palavra));
 }

@@ -22,6 +22,9 @@ final class Sofia
 
     private const PALAVRAS_CONTAGEM = ['quantas', 'quantos', 'total de', 'número de', 'numero de'];
 
+    /** Quantas empresas uma resposta lista antes de resumir o resto em um número. */
+    private const LIMITE_DA_LISTA = 30;
+
     /** O que cada palavra de contagem responde: chave em Contadores e o texto. */
     private const ROTULOS_CONTAGEM = [
         'empresas' => ['empresa', 'empresas cadastradas na carteira'],
@@ -35,12 +38,14 @@ final class Sofia
     {
         $texto = Str::lower($pergunta);
 
-        $empresa = Empresa::with(['socio', 'fontes', 'treinamentos'])
-            ->get()
+        // Só id e nome para procurar: a carteira tem mais de mil empresas, e as
+        // relações só valem a consulta para a que foi citada.
+        $empresa = Empresa::query()
+            ->get(['id', 'nome'])
             ->first(fn (Empresa $registro) => str_contains($texto, Str::lower($registro->nome)));
 
         if ($empresa !== null) {
-            return self::sobreEmpresa($empresa, $texto);
+            return self::sobreEmpresa($empresa->load(['socio', 'fontes', 'treinamentos']), $texto);
         }
 
         if (self::pedeTreinamento($texto)) {
@@ -73,20 +78,20 @@ final class Sofia
         }
 
         if (str_contains($texto, 'sócio') || str_contains($texto, 'socio')) {
-            $lista = Empresa::with('socio')->get()
+            $lista = Empresa::with('socio')->orderBy('nome')->limit(self::LIMITE_DA_LISTA)->get()
                 ->map(fn (Empresa $e) => "• {$e->nome}: {$e->socio->nome} ({$e->socio->cargo})")
                 ->implode("\n");
 
-            return "Sócios responsáveis por empresa:\n{$lista}";
+            return "Sócios responsáveis por empresa:\n{$lista}".self::restantes(Empresa::count());
         }
 
         if (str_contains($texto, 'empresa') || str_contains($texto, 'cliente')) {
-            $empresas = Empresa::all();
-            $lista = $empresas
+            $total = Empresa::count();
+            $lista = Empresa::orderBy('nome')->limit(self::LIMITE_DA_LISTA)->get()
                 ->map(fn (Empresa $e) => "• {$e->nome} — {$e->setor} — {$e->status}")
                 ->implode("\n");
 
-            return "Temos {$empresas->count()} empresas cadastradas na base:\n{$lista}";
+            return "Temos {$total} empresas cadastradas na base:\n{$lista}".self::restantes($total);
         }
 
         return 'Encontrei informações relacionadas na base da HC. Há registros sobre empresas, '
@@ -94,6 +99,15 @@ final class Sofia
             .'alinhamento e financeira), documentos, projetos, processos internos e conteúdos do '
             .'sistema de treinamento. Pergunte por uma empresa, um tipo de reunião, um processo, '
             .'um treinamento — ou por quantos registros existem de cada coisa.';
+    }
+
+    private static function restantes(int $total): string
+    {
+        $restantes = $total - self::LIMITE_DA_LISTA;
+
+        return $restantes > 0
+            ? "\n…e mais {$restantes}. Pergunte pelo nome de uma empresa para ver os detalhes dela."
+            : '';
     }
 
     private static function pedeTreinamento(string $texto): bool

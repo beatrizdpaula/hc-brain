@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Empresa;
+use App\Models\Reuniao;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -48,6 +50,20 @@ class ApiTest extends TestCase
             ->assertJsonStructure([
                 'data' => [['id', 'nome', 'setor', 'statusTag', 'socio', 'totalReunioes']],
             ]);
+    }
+
+    /** A lista traz só os totais e a reunião mais recente, não as fontes e reuniões inteiras. */
+    public function test_lista_de_empresas_traz_totais_e_a_ultima_reuniao(): void
+    {
+        $ultima = Reuniao::where('empresa_id', 'empresaX')->orderByDesc('data')->orderByDesc('id')->firstOrFail();
+
+        $empresas = $this->autenticado()->getJson('/api/empresas')->assertOk()->json('data');
+        $empresaX = collect($empresas)->firstWhere('id', 'empresaX');
+
+        $this->assertSame(4, $empresaX['totalFontes']);
+        $this->assertSame(3, $empresaX['totalReunioes']);
+        $this->assertSame(['tipo' => $ultima->tipo, 'data' => $ultima->data->format('d/m/Y')], $empresaX['ultimaReuniao']);
+        $this->assertArrayNotHasKey('fontes', $empresaX);
     }
 
     public function test_detalhe_da_empresa(): void
@@ -227,6 +243,21 @@ class ApiTest extends TestCase
             ->postJson('/api/sofia/perguntar', ['pergunta' => 'Quais empresas temos?'])
             ->assertOk()
             ->assertJsonPath('resposta', fn (string $r) => str_starts_with($r, 'Temos 5 empresas'));
+    }
+
+    /** Com a carteira real, listar mais de mil empresas no chat não serve para nada. */
+    public function test_sofia_resume_a_lista_quando_a_carteira_e_grande(): void
+    {
+        foreach (range(1, 26) as $indice) {
+            Empresa::create(['id' => "extra-{$indice}", 'nome' => "Extra {$indice}", 'setor' => 'Saúde', 'status' => 'Ativo', 'status_tag' => 'green']);
+        }
+
+        $this->autenticado()
+            ->postJson('/api/sofia/perguntar', ['pergunta' => 'Quais empresas temos?'])
+            ->assertOk()
+            ->assertJsonPath('resposta', fn (string $r) => str_starts_with($r, 'Temos 31 empresas')
+                && substr_count($r, '•') === 30
+                && str_contains($r, '…e mais 1.'));
     }
 
     public function test_sofia_encontra_reunioes_por_tipo(): void

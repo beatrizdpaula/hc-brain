@@ -20,9 +20,9 @@ class EmpresaController extends Controller
 {
     public function index(): AnonymousResourceCollection
     {
-        $empresas = Empresa::with(['socio', 'fontes', 'reunioes'])
-            ->withCount('reunioes')
-            ->orderBy('created_at')
+        $empresas = Empresa::with(['socio', 'ultimaReuniao'])
+            ->withCount(['reunioes', 'fontes'])
+            ->orderBy('nome')
             ->get();
 
         return EmpresaResource::collection($empresas);
@@ -32,7 +32,7 @@ class EmpresaController extends Controller
     public function show(Empresa $empresa): JsonResponse
     {
         $empresa->load([
-            'socio', 'fontes', 'reunioes.empresa.socio', 'treinamentos',
+            'socio', 'fontes', 'ultimaReuniao', 'reunioes.empresa.socio', 'treinamentos',
             'financeiro', 'receitasMensais', 'transacoes',
         ]);
 
@@ -88,7 +88,7 @@ class EmpresaController extends Controller
             return $empresa;
         });
 
-        return (new EmpresaResource($empresa->load(['socio', 'fontes', 'reunioes'])))
+        return (new EmpresaResource($empresa->load(['socio', 'fontes', 'ultimaReuniao'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -106,7 +106,7 @@ class EmpresaController extends Controller
             $empresa->socio()->updateOrCreate([], $request->dadosDoSocio());
         });
 
-        return new EmpresaResource($empresa->load(['socio', 'fontes', 'reunioes']));
+        return new EmpresaResource($empresa->load(['socio', 'fontes', 'ultimaReuniao']));
     }
 
     /**

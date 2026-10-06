@@ -40,5 +40,6 @@
       <div class="estado-carregando">Carregando empresas…</div>
     </div>
     <div class="empresas-grid hidden-view" id="empresasGrid"></div>
+    <div class="empresas-mais" id="empresasMais" aria-live="polite" hidden></div>
   </section>
 @endsection

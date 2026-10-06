@@ -182,6 +182,25 @@
 }
 
 /* --------------------------------------------------------------------------
+   CARREGAR MAIS
+   A lista entra em lotes; o contador fica logo abaixo dela.
+   -------------------------------------------------------------------------- */
+.empresas-mais {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--esp-3);
+    margin-top: var(--esp-4);
+    color: var(--texto-fraco);
+    font-size: var(--texto-sm);
+}
+
+.empresas-mais[hidden] {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
    RESPONSIVO
    -------------------------------------------------------------------------- */
 @media (max-width: 900px) {

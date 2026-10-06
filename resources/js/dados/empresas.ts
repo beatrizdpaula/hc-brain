@@ -36,6 +36,7 @@ export interface ResumoReuniao {
     data: string;
 }
 
+/** A empresa como a lista de clientes recebe: das fontes, só o total. */
 export interface Empresa {
     id: string;
     nome: string;
@@ -43,9 +44,14 @@ export interface Empresa {
     status: string;
     statusTag: CorTag;
     socio: SocioEmpresa;
-    fontes: FonteEmpresa[];
+    totalFontes: number;
     totalReunioes: number;
     ultimaReuniao: ResumoReuniao | null;
+}
+
+/** No detalhe do cliente a empresa chega com as fontes em si. */
+export interface EmpresaDetalhada extends Empresa {
+    fontes: FonteEmpresa[];
 }
 
 export interface ReceitaMes {
@@ -82,7 +88,7 @@ export interface FinanceiroEmpresa {
 
 /** Tudo o que o detalhe do cliente mostra, em uma resposta só. */
 export interface DetalheEmpresa {
-    empresa: Empresa;
+    empresa: EmpresaDetalhada;
     reunioes: Reuniao[];
     treinamentos: ConteudoTreinamento[];
     /** Nem toda empresa tem relacionamento financeiro registrado. */

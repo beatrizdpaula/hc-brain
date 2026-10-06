@@ -10,7 +10,7 @@
 
 import {
     carregarEmpresa,
-    type Empresa,
+    type EmpresaDetalhada,
     type FinanceiroEmpresa,
 } from "../dados/empresas.ts";
 import { tagDoStatus, tagDoTipoDeReuniao, type Reuniao } from "../dados/reunioes.ts";
@@ -62,7 +62,7 @@ if (detalhe) {
     });
 }
 
-function renderCabecalho(empresa: Empresa, reunioes: Reuniao[]): void {
+function renderCabecalho(empresa: EmpresaDetalhada, reunioes: Reuniao[]): void {
     const ultima = reunioes[0];
 
     porId("detailAvatar").textContent = iniciais(empresa.nome);
@@ -78,7 +78,7 @@ function renderCabecalho(empresa: Empresa, reunioes: Reuniao[]): void {
     porId("detailUltimaReuniao").textContent = ultima ? ultima.data : "—";
 }
 
-function renderSocio(empresa: Empresa): void {
+function renderSocio(empresa: EmpresaDetalhada): void {
     porId("socioCard").innerHTML = `
     <div class="socio-header">
       <div class="socio-avatar">${iniciais(empresa.socio.nome)}</div>
@@ -94,7 +94,7 @@ function renderSocio(empresa: Empresa): void {
   `;
 }
 
-function renderFontes(empresa: Empresa): void {
+function renderFontes(empresa: EmpresaDetalhada): void {
     const fontes = porId("fontesList");
 
     fontes.innerHTML = empresa.fontes.length
@@ -155,7 +155,7 @@ function renderReunioes(reunioes: Reuniao[]): void {
     });
 }
 
-function renderTreinamentos(empresa: Empresa, treinamentos: ConteudoTreinamento[]): void {
+function renderTreinamentos(empresa: EmpresaDetalhada, treinamentos: ConteudoTreinamento[]): void {
     const listaTreinamentos = porId("empresaTreinamentosList");
 
     listaTreinamentos.innerHTML = treinamentos.length
@@ -192,7 +192,7 @@ function renderTreinamentos(empresa: Empresa, treinamentos: ConteudoTreinamento[
 }
 
 function renderFinanceiro(
-    empresa: Empresa,
+    empresa: EmpresaDetalhada,
     totalReunioes: number,
     dados: FinanceiroEmpresa | null,
 ): void {
