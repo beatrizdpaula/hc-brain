@@ -10,6 +10,7 @@ RUN apt-get update && \
         libicu-dev \
         libzip-dev \
         libsqlite3-dev \
+        libpq-dev \
         libonig-dev \
         libxml2-dev \
         libcurl4-openssl-dev \
@@ -19,6 +20,7 @@ RUN apt-get update && \
 # Instala extensões PHP
 RUN docker-php-ext-install \
     pdo_sqlite \
+    pdo_pgsql \
     bcmath \
     intl \
     zip
