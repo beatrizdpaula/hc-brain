@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\RespostaDeIa;
+
 /*
 |--------------------------------------------------------------------------
 | HC Brain
@@ -68,6 +70,34 @@ return [
             'chave' => env('OPENAI_API_KEY'),
             'url' => env('OPENAI_TRANSCRIPTION_URL', 'https://api.openai.com/v1/audio/transcriptions'),
             'modelo' => env('OPENAI_TRANSCRIPTION_MODEL', 'whisper-1'),
+        ],
+
+        /*
+        | Quem responde pela Sofia. Desligada, ela responde pelas consultas ao
+        | banco de `RespostaDaBase` — que é também onde a pergunta cai quando
+        | a IA falha, então ligar isto nunca deixa a tela sem resposta.
+        */
+        'ia' => [
+            'ativa' => (bool) env('HC_SOFIA_IA', false),
+
+            /*
+            | A classe que fala com a IA. Qualquer uma que implemente
+            | `RespondePerguntas` serve: trocar aqui troca a Sofia inteira.
+            */
+            'classe' => env('HC_SOFIA_IA_CLASSE', RespostaDeIa::class),
+
+            'url' => env('HC_SOFIA_IA_URL'),
+            'chave' => env('HC_SOFIA_IA_CHAVE'),
+            'modelo' => env('HC_SOFIA_IA_MODELO'),
+
+            /* Segundos de espera antes de desistir e responder pela base. */
+            'timeout' => (int) env('HC_SOFIA_IA_TIMEOUT', 20),
+
+            /*
+            | Quantas mensagens anteriores da conversa vão junto com a
+            | pergunta. Zero manda cada pergunta sozinha, sem memória.
+            */
+            'memoria' => (int) env('HC_SOFIA_IA_MEMORIA', 10),
         ],
     ],
 

@@ -41,8 +41,20 @@ export function carregarSugestoes(): Promise<SugestaoSofia[]> {
     return obter<SugestaoSofia[]>("/sofia/sugestoes");
 }
 
-export async function perguntarSofia(pergunta: string): Promise<string> {
-    const resposta = await enviar<{ resposta: string }>("/sofia/perguntar", { pergunta });
+/**
+ * O que já foi dito na conversa vai junto com a pergunta: é isso que deixa a
+ * Sofia entender um "e a última reunião dela?" logo depois de uma pergunta
+ * sobre uma empresa. As respostas montadas pelo banco ignoram o histórico; a
+ * IA é que o usa.
+ */
+export async function perguntarSofia(
+    pergunta: string,
+    historico: MensagemSofia[] = [],
+): Promise<string> {
+    const resposta = await enviar<{ resposta: string }>("/sofia/perguntar", {
+        pergunta,
+        historico: paraHistorico(historico),
+    });
     return resposta.resposta;
 }
 
@@ -50,6 +62,7 @@ export async function perguntarSofia(pergunta: string): Promise<string> {
 export function enviarAudioSofia(
     arquivo: Blob,
     nome: string,
+    historico: MensagemSofia[] = [],
 ): Promise<{ transcricao: string; resposta: string }> {
     const dados = new FormData();
     const envio =
@@ -58,5 +71,20 @@ export function enviarAudioSofia(
             : new File([arquivo], nome, { type: arquivo.type || "audio/webm" });
     dados.append("audio", envio, nome);
 
+    paraHistorico(historico).forEach((mensagem, indice) => {
+        dados.append(`historico[${indice}][autor]`, mensagem.autor);
+        dados.append(`historico[${indice}][texto]`, mensagem.texto);
+    });
+
     return enviarArquivo("/sofia/audio", dados);
+}
+
+/** Só autor e texto: o resto da mensagem não diz nada a quem responde. */
+function paraHistorico(
+    mensagens: MensagemSofia[],
+): { autor: AutorMensagem; texto: string }[] {
+    return mensagens.map((mensagem) => ({
+        autor: mensagem.autor,
+        texto: mensagem.texto,
+    }));
 }

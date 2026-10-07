@@ -34,11 +34,15 @@ class TelaController extends Controller
      * A tela precisa saber, antes do primeiro clique no microfone, se o
      * servidor transcreve áudio. Sem isso — e sem reconhecimento de voz no
      * navegador — ela esconde o caminho do áudio em vez de falhar depois.
+     *
+     * Saber se há IA no caminho é o que mantém honesta a janela "Modelo da
+     * Sofia": sem IA, a resposta não sai da base da HC; com IA, sai.
      */
     public function sofiaIa(): View
     {
         return view('telas.sofia-ia', [
             'transcricaoConfigurada' => Transcricao::configurada(),
+            'iaAtiva' => (bool) config('hc.sofia.ia.ativa'),
         ]);
     }
 

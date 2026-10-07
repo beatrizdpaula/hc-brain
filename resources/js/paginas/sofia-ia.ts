@@ -145,6 +145,10 @@ document.body.append(vozTela);
 /* Os dois caminhos do áudio, decididos antes do primeiro clique: ditar no
    próprio navegador, ou mandar o arquivo para o servidor transcrever. */
 const transcricaoNoServidor = dado(tela, "transcricaoServidor") === "1";
+
+/* Com IA configurada a resposta passa por um serviço externo; sem ela, sai
+   direto do banco. A janela "Modelo da Sofia" precisa contar qual é o caso. */
+const respondeComIa = dado(tela, "ia") === "1";
 const ditadoNoNavegador = reconhecimentoDisponivel() !== null;
 const audioDisponivel = ditadoNoNavegador || transcricaoNoServidor;
 
@@ -557,13 +561,16 @@ async function enviarPergunta(pergunta: string, voz: boolean): Promise<string | 
     if (!podePerguntar(texto)) return null;
 
     limparAviso();
+    /* A conversa de antes da pergunta: `registrarPergunta` monta um array
+       novo, então esta cópia não ganha a pergunta que está saindo agora. */
+    const historico = conversaAberta()?.mensagens ?? [];
     const id = registrarPergunta(texto, voz);
     aguardando.add(id);
     renderConversa();
 
     let resposta: string;
     try {
-        resposta = await perguntarSofia(texto);
+        resposta = await perguntarSofia(texto, historico);
     } catch {
         resposta = "Não consegui consultar a base agora. Tente novamente em instantes.";
     }
@@ -608,7 +615,7 @@ async function enviarBlob(arquivo: Blob, nome: string): Promise<void> {
     }
 
     try {
-        const resultado = await enviarAudioSofia(arquivo, nome);
+        const resultado = await enviarAudioSofia(arquivo, nome, aberta?.mensagens ?? []);
         transcrevendoId = null;
         aguardando.delete(id);
         if (!conversaAindaExiste(id)) return;
@@ -1476,9 +1483,13 @@ modoPesquisa.addEventListener("click", () => atualizarSecao("sofia", { modo: "se
 modoBase.addEventListener("click", () => atualizarSecao("sofia", { modo: "base" }));
 
 porId("sofiaModelBtn").addEventListener("click", () => {
+    const origem = respondeComIa
+        ? "A pergunta e esses dados vão para o modelo de IA configurado pela HC, que escreve a resposta."
+        : "Ela não consulta nada fora daqui.";
+
     showModal(
         "Modelo da Sofia",
-        `A Sofia responde a partir da base da HC: empresas, sócios, reuniões, documentos, treinamentos, projetos e processos. ${explicacaoDoAudio()} Ela não consulta nada fora daqui.`,
+        `A Sofia responde a partir da base da HC: empresas, sócios, reuniões, documentos, treinamentos, projetos e processos. ${explicacaoDoAudio()} ${origem}`,
     );
 });
 

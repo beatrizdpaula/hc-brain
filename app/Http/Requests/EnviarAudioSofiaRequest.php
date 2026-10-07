@@ -8,9 +8,12 @@ use Illuminate\Http\UploadedFile;
 
 class EnviarAudioSofiaRequest extends FormRequest
 {
+    use ComHistoricoDaSofia;
+
     public function rules(): array
     {
         return [
+            ...$this->regrasDoHistorico(),
             'audio' => [
                 'required',
                 'file',

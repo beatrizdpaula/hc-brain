@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EnviarAudioSofiaRequest;
+use App\Http\Requests\PerguntarSofiaRequest;
 use App\Models\SugestaoSofia;
 use App\Support\Sofia;
 use App\Support\Transcricao;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Throwable;
 
@@ -22,13 +22,14 @@ class SofiaController extends Controller
         return response()->json($sugestoes);
     }
 
-    public function perguntar(Request $request): JsonResponse
+    public function perguntar(PerguntarSofiaRequest $request): JsonResponse
     {
-        $dados = $request->validate([
-            'pergunta' => ['required', 'string', 'max:1000'],
+        return response()->json([
+            'resposta' => Sofia::responder(
+                $request->string('pergunta')->value(),
+                $request->historico(),
+            ),
         ]);
-
-        return response()->json(['resposta' => Sofia::responder($dados['pergunta'])]);
     }
 
     public function audio(EnviarAudioSofiaRequest $request): JsonResponse
@@ -65,7 +66,7 @@ class SofiaController extends Controller
 
         return response()->json([
             'transcricao' => $texto,
-            'resposta' => Sofia::responder($texto),
+            'resposta' => Sofia::responder($texto, $request->historico()),
         ]);
     }
 }

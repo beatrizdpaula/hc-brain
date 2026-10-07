@@ -11,6 +11,7 @@
       class="sofia-ai-screen"
       id="sofiaTela"
       data-transcricao-servidor="{{ $transcricaoConfigurada ? '1' : '0' }}"
+      data-ia="{{ $iaAtiva ? '1' : '0' }}"
     >
       <button
         type="button"
